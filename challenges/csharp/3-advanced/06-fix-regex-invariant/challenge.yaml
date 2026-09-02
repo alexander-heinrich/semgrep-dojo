@@ -20,7 +20,7 @@ instructions: |
   * `fix-regex:` — apply a regular-expression substitution to the matched text, with `regex:` and
     `replacement:` keys. Handy when the match is long and only a small part changes.
 
-  Replace the starter's `fix:` with a `fix-regex:` that rewrites `ToLower()` to `ToLowerInvariant()`.
+  Change the starter's `fix:` into a `fix-regex:` that rewrites `ToLower()` to `ToLowerInvariant()`.
   The challenge is graded on the rendered fix text.
 hints:
   - "`fix-regex:` is a mapping with two keys: `regex:` and `replacement:`."
@@ -38,7 +38,9 @@ followup: |
 
   **Try this:** switch to `fix: $S.ToLowerInvariant()` — same rendered fixes, still correct. Then
   change the pattern to `$S.ToLower().Trim()` with `fix: $S.ToLowerInvariant().Trim()`: the match
-  grows to include `.Trim()` and the fix has to reproduce it.
+  grows to include `.Trim()` and the fix has to reproduce it. The checker now reports the rendered
+  fix `email.ToLowerInvariant().Trim()` as different from the reference `email.ToLowerInvariant()` —
+  expected, since fixes are graded as text.
 sources:
   - repo: umbraco/Umbraco-CMS
     path: src/Umbraco.Core/Services/MemberService.cs

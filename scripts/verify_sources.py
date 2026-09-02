@@ -62,7 +62,10 @@ def check(cdir: Path, fix_lines: bool) -> tuple[bool, list[str]]:
         n = norm(line)
         found = [k for k, up in enumerate(upstream) if n in up]
         if found:
-            for k in found:
+            # a line present in several sources (shared `using`s, braces) is attributed to the source whose
+            # declared range contains it, so composite targets keep non-overlapping ranges
+            declared = [k for k in found if len(sources[k].get("lines", [])) == 2 and sources[k]["lines"][0] <= i <= sources[k]["lines"][1]]
+            for k in (declared or found):
                 attributed[k].append(i)
         elif STRUCTURAL.match(line):
             continue

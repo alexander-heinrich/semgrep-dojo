@@ -9,16 +9,18 @@ covers:
 grade: fixes
 instructions: |
   The JWT issued by this method expires at `DateTime.Now.AddMinutes(30)`. `DateTime.Now` is the
-  server's *local* time; token validators compare against UTC, so a token minted on a machine in a
-  UTC+2 zone is "valid" for two extra hours. The safe spelling is `DateTime.UtcNow`.
+  server's *local* time, while JWT lifetimes (`exp`, `nbf`) are expressed in UTC. Mixing the two is a
+  classic source of off-by-a-time-zone bugs — DST transitions, or a later comparison against
+  `DateTime.UtcNow` somewhere else — so the safe spelling is `DateTime.UtcNow`.
 
-  The starter rule already finds the line. This challenge is graded on the **fix**: add a `fix:` key
-  to the rule so that `semgrep --autofix` would rewrite the match to `DateTime.UtcNow`.
+  The starter rule already finds the line; this challenge is graded on the **fix**. Change the rule
+  by adding a `fix:` key so that `semgrep --autofix` would rewrite the match to `DateTime.UtcNow`.
 
   A `fix:` is plain replacement text for the matched range. It may mention metavariables from the
   pattern (`$X`), which are substituted with what they captured.
 hints:
-  - "Add a top-level key next to `pattern:`: `fix: DateTime.UtcNow`."
+  - "The replacement text goes in a key of its own, at the same level as `pattern:` and `message:`. Only the matched range (`DateTime.Now`) is replaced, so do not repeat `.AddMinutes(30)`."
+  - "Add a rule-level key next to `pattern:`: `fix: DateTime.UtcNow`."
 followup_title: Correct!
 followup: |
   Semgrep replaces exactly the matched range — `DateTime.Now`, not the whole line — with the fix text,

@@ -38,7 +38,7 @@ followup: |
 
   **Try this:** change the nested pattern to `welcome to $ENGINE!` — still a match, generic mode is
   just tokens. Then drop `language: generic`: the nested pattern is now parsed as C#, where
-  `@Model.$PROP` is the member access `Model.$PROP` (`@` merely escapes the identifier), and a
+  `@Model.$PROP` is a member-access expression on the verbatim identifier `@Model`, and a
   string literal contains no such expression — nothing matches.
 sources:
   - repo: CodeThreat/IssueBlot.NET

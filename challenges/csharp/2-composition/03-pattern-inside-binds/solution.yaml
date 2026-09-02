@@ -1,6 +1,6 @@
 rules:
   - id: redirect-of-parameter
-    message: $M redirects to its own parameter $P without validation
+    message: $M redirects to its own parameter $P
     languages: [csharp]
     severity: WARNING
     patterns:

@@ -1,6 +1,6 @@
 // Source: https://github.com/HooliCorp/vulnerable_net_core/blob/a20ecb5fcac9edaf1732729dc2bc3b2e81894552/vulnerable_asp_net_core/Controllers/SL.cs  (lines 1-27, 67-100, 317-342)
 // Copyright (c) HooliCorp. Licensed under Apache-2.0. See THIRD_PARTY_NOTICES.md.
-// Modified for this tutorial: yes — unrelated actions and fields replaced by `// ... (omitted)`; annotation comments added.
+// Modified for this tutorial: yes — unrelated actions and fields replaced by `// ... (omitted)`, a TODO comment removed from InsecureDeserialization; annotation comment added.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

@@ -20,21 +20,25 @@ instructions: |
   Add a `metavariable-regex` entry that keeps only values consisting of 32 or more hex digits.
   Remember that `$V` captured the literal *including its quotes*.
 hints:
-  - "The entry looks like `- metavariable-regex: {metavariable: $V, regex: ...}` and sits under `patterns:` next to the `- pattern:` line."
+  - "The entry is `- metavariable-regex:` with two indented keys, `metavariable: $V` and `regex: ...`, and sits under `patterns:` next to the `- pattern:` line. Use that block form — a one-line `{metavariable: $V, regex: ...}` mapping breaks on the `[` and `{` inside the regex."
   - "Anchor the regex and include the quotes: `^\"[0-9a-f]{32,}\"$`."
 followup_title: Correct!
 followup: |
   `metavariable-regex` sees the raw source text of the binding — for a string literal that is
-  `"f449a71c…"`, quotes included, which is why the regex starts with `^"`. Without anchors,
-  `[0-9a-f]{32,}` would still work here, but `^…$` makes the intent explicit and avoids matching a
-  long hex string embedded in a longer literal.
+  `"f449a71c…"`, quotes included, which is why the regex starts with `"`. It is also *left-anchored*:
+  Semgrep only tries the regex at the beginning of the captured text, so the bare `[0-9a-f]{32,}`
+  finds nothing here (the text starts with a quote). The end is not anchored — `"[0-9a-f]{32}` would
+  match too — so the closing `"$` is what stops a long hex prefix inside a longer literal from
+  passing. The leading `^` is redundant but harmless; for a "contains" test, start the regex with `.*`.
 
-  The regex operators are the one family of features the browser engine on this site cannot run
+  The regex operators are among the few features the browser engine on this site cannot run
   (it has no regex library), which is why this challenge is checked with the real Semgrep CLI.
 
   **Try this:** run `metavariable-regex` on `$N` instead, with `regex: (?i)secret|token|password` — a
-  common way to flag suspicious *names* rather than values. Combine both with two entries under
-  `patterns:` and see that they are ANDed.
+  common way to flag suspicious *names* rather than values. `TokenSecret` is still reported, but only
+  because it *starts* with `Token`: change the regex to `(?i)secret` and the finding disappears;
+  `(?i).*secret` brings it back. Then keep both the name check and the value check as two entries
+  under `patterns:` and see that they are ANDed.
 sources:
   - repo: appsecco/dvcsharp-api
     path: Models/User.cs

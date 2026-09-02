@@ -22,6 +22,7 @@ instructions: |
 
   Expected result: exactly one finding, the `foreach` over the document; every `Show(...)` is clean.
 hints:
+  - "Both new keys sit at the same level as `pattern-sources:` / `pattern-sinks:`. A sanitizer names an expression whose *result* is clean; a propagator names a call that *carries* taint from one argument to another."
   - "`pattern-sanitizers:` takes the same kind of entries as sinks: `- pattern: _javaScriptEncoder.Encode(...)`."
   - "`pattern-propagators:` entries need three keys: `pattern: $DOC.LoadXml($XML)`, `from: $XML`, `to: $DOC`."
 followup_title: Correct!
@@ -40,8 +41,9 @@ followup: |
   and similar "taint goes in here, comes out there" APIs.
 
   **Try this:** delete the sanitizer and keep the propagator — three findings, since both encoded
-  `Show(...)` calls are reported again. Then change the propagator's `to:` to `$XML`: nothing
-  propagates any more (the taint already lives in `$XML`).
+  `Show(...)` calls are reported again. Then change the propagator's `to:` to `$XML`: only the
+  `Show(...)` in `SQLInjection` is left — `$XML` was tainted already, so nothing new is propagated
+  and the document stays clean.
 sources:
   - repo: HooliCorp/vulnerable_net_core
     path: vulnerable_asp_net_core/Controllers/SL.cs

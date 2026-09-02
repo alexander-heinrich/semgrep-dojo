@@ -11,9 +11,9 @@ instructions: |
   (dvcsharp-api) and a cookie that lives 10 (IssueBlot). Suppose policy says nothing may live longer
   than 15 minutes. The starter captures the number in `$N` but reports both.
 
-  `metavariable-comparison` evaluates a small expression over a captured value — numbers, and with
-  helper functions also strings — and keeps the match only if it is true. The expression uses the
-  metavariable by name: `$N > 15`, `$N * 60 > 900`, `$N != 0` and so on.
+  `metavariable-comparison` evaluates a small expression over a captured value — numbers and
+  strings, plus a few helper functions — and keeps the match only if it is true. The expression uses
+  the metavariable by name: `$N > 15`, `$N * 60 > 900`, `$N != 0` and so on.
 
   Add a `metavariable-comparison` entry so that only the 30-minute token is reported.
 hints:
@@ -23,16 +23,19 @@ followup_title: Correct!
 followup: |
   `$N` is bound to the literal `30` in one call and `10` in the other; the comparison `$N > 15`
   holds only for the first. The comparison language is a Python-like expression evaluator: numeric
-  operators, `and` / `or` / `not`, and a few helpers such as `int(...)`, `str(...)`, `today()` and
-  `re.match(...)` for the CLI. (That is also why the browser engine on this site ships a small
-  Python parser.)
+  operators, `and` / `or` / `not`, and a few helpers such as `int(...)`, `str(...)` and `today()`;
+  `re.match(...)` works in the CLI only (the browser engine on this site has no regex support, so
+  it lets every binding through). That Python-like syntax is also why the browser engine here ships
+  a small Python parser.
 
-  Comparisons only see *literal* bindings. If the argument were a variable — `AddMinutes(lifetime)` —
-  the entry could not evaluate it and the match would be dropped; combine with constant propagation
-  or a taint rule for those cases.
+  Comparisons need a value they can evaluate. A literal works, and so does a local that constant
+  propagation resolves to one (`int n = 30; ... AddMinutes(n)` is still reported). If the argument is
+  something Semgrep cannot resolve — a parameter, `AddMinutes(lifetime)` — the comparison fails and
+  the match is dropped; a comparison cannot help there, so match the call without it or track the
+  value with a taint rule.
 
-  **Try this:** use `comparison: $N > 15 and $N < 60` — same result. Then bind the whole call and
-  compare with the argument in seconds via `metavariable: $N`, `comparison: $N * 60 > 900`.
+  **Try this:** use `comparison: $N > 15 and $N < 60` — same result. Then compare in seconds
+  instead, `comparison: $N * 60 > 900` — still only the 30-minute token (1800 > 900, but 600 is not).
 sources:
   - repo: appsecco/dvcsharp-api
     path: Models/User.cs
@@ -40,15 +43,15 @@ sources:
     license: MIT
     copyright: "2022 Appsecco Ltd."
     url: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Models/User.cs
-    lines: [4, 74]
+    lines: [4, 51]
     modified: true
-    modification_note: "Constants, properties and later members replaced by `// ... (omitted)`; unused usings dropped; annotation comment added."
+    modification_note: "Constants, properties and the other methods replaced by `// ... (omitted)`; unused using directives dropped; annotation comment added."
   - repo: CodeThreat/IssueBlot.NET
     path: src/NETMVCBlot/Controllers/AccountController.cs
     commit: 06f33f75ec5f3e36594f32e5413d8d4fd64282b0
     license: MIT
     copyright: "2023 CodeThreat"
     url: https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Controllers/AccountController.cs
-    lines: [4, 74]
+    lines: [53, 74]
     modified: true
-    modification_note: "Only the class shell and the Post action kept; other members replaced by `// ... (omitted)`; annotation comment added."
+    modification_note: "Only the class shell and the Post action kept; other members replaced by `// ... (omitted)`; its `System.Web*` using directives merged into the shared using block (lines 7-9), the rest dropped; annotation comment added."

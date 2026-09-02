@@ -13,7 +13,8 @@ instructions: |
 
   This ASP.NET Core sample controller redirects three times. Two redirects go to the fixed URL `"/"`
   and are harmless; the third sends the user to `returnUrl`, a value that came from the request and
-  needs a local-URL check. The starter matches all three.
+  needs a local-URL check. (This sample does check, on line 43 — subtracting *guarded* redirects is a
+  later challenge; here every redirect to a variable should be reported.) The starter matches all three.
 
   Add a `pattern-not` entry so that redirects to a string literal are excluded and only
   `Redirect(returnUrl)` remains.
@@ -30,8 +31,11 @@ followup: |
   `pattern:`; the block only becomes interesting once you add filters.
 
   **Try this:** flip it around — keep `pattern: Redirect($U)` and add `pattern-not: Redirect($V)`
-  with a *different* metavariable name. Everything disappears: `$V` matches any argument, so the
-  negative pattern cancels every match. Metavariable names only unify within one pattern.
+  with a *different* metavariable name. Everything disappears: `$V` is not bound by the positive
+  pattern, so it is free to match any argument and the negative pattern cancels every match.
+  (`pattern-not: Redirect($U)` cancels everything too — at the same range the same name binds the
+  same argument.) Metavariables *do* carry across the entries of a `patterns:` block; the next
+  challenges are built on exactly that.
 sources:
   - repo: dotnet/aspnetcore
     path: src/Security/samples/Cookies/Controllers/AccountController.cs
@@ -39,6 +43,6 @@ sources:
     license: MIT
     copyright: ".NET Foundation and Contributors"
     url: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs
-    lines: [4, 71]
+    lines: [4, 70]
     modified: true
     modification_note: "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; annotation comments added."

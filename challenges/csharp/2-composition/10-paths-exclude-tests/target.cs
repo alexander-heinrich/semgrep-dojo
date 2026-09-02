@@ -1,6 +1,6 @@
 // Source: https://github.com/DapperLib/Dapper/blob/6d48ef664acc7298c649e2d449d903b3360d5a90/tests/Dapper.Tests/ProcedureTests.cs  (lines 1-8, 15-16, 64-93, 115-131, 144-158, 345-346)
 // Copyright (c) Stack Exchange, Inc. Licensed under Apache-2.0. See THIRD_PARTY_NOTICES.md.
-// Modified for this tutorial: yes — same excerpt as the named-arguments challenge; annotation comments changed to `ok`.
+// Modified for this tutorial: no
 using System;
 using System.Data;
 using System.Linq;

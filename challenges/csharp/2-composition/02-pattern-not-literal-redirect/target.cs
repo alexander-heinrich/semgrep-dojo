@@ -48,8 +48,7 @@ namespace AuthSamples.Cookies.Controllers
                 else
                 {
                     // ok: redirect-to-variable
-                    // ok: redirect-to-variable
-            return Redirect("/");
+                    return Redirect("/");
                 }
             }
 

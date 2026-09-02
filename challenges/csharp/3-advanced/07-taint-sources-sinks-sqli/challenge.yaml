@@ -33,8 +33,10 @@ followup: |
 
   Each entry under `pattern-sources` / `pattern-sinks` is a full pattern block, so `patterns:` with
   `focus-metavariable` is how you say "the *argument* is the sink, not the whole call". Semgrep's
-  taint tracking is intraprocedural in the OSS engine: it follows data within one method (and
-  through obvious helpers in the same file), not across arbitrary calls.
+  taint tracking is intraprocedural in the OSS engine: it follows data within one method only. A
+  call with a tainted argument, such as `Helper(name)`, is simply *assumed* to return tainted data —
+  the helper's body is never analysed, so a source hidden inside a helper is missed, and a helper
+  that discards its input still counts as a flow. Cross-function tracking is a Pro-engine feature.
 
   **Try this:** add `- pattern: $DB.ExecuteReader()` as a second sink — a second finding appears on
   `using (var reader = command.ExecuteReader())` in `SQLInjection`, because `command` was built from
@@ -50,4 +52,4 @@ sources:
     url: https://github.com/HooliCorp/vulnerable_net_core/blob/a20ecb5fcac9edaf1732729dc2bc3b2e81894552/vulnerable_asp_net_core/Controllers/SL.cs
     lines: [4, 86]
     modified: true
-    modification_note: "Unrelated actions and fields replaced by `// ... (omitted)`; annotation comments added."
+    modification_note: "Fields replaced by `// ... (omitted)`, unrelated actions dropped; annotation comments added."

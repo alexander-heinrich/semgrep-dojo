@@ -33,7 +33,8 @@ followup: |
 
   **Try this:** prepend `var $X = RequestUtils.GetIfDefined(Request, "..."); ...` to the *starter*
   pattern (keeping its `return View();` tail) — it matches now, with the match starting at the
-  `var xml` line. Then try the same on `XXE`: no `StringReader` there, so the middle line fails.
+  `var xml` line. `XXE` also starts with `GetIfDefined` and ends with `return View();`, yet it is
+  still not reported: there is no `StringReader` in it, so the middle line fails.
 sources:
   - repo: HooliCorp/vulnerable_net_core
     path: vulnerable_asp_net_core/Controllers/SL.cs
@@ -43,4 +44,4 @@ sources:
     url: https://github.com/HooliCorp/vulnerable_net_core/blob/a20ecb5fcac9edaf1732729dc2bc3b2e81894552/vulnerable_asp_net_core/Controllers/SL.cs
     lines: [4, 89]
     modified: true
-    modification_note: "Unrelated actions and fields replaced by `// ... (omitted)`; annotation comment added."
+    modification_note: "Unrelated actions and fields replaced by `// ... (omitted)`, a TODO comment removed from `InsecureDeserialization`; annotation comment added."

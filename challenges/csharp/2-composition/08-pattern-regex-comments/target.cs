@@ -41,6 +41,7 @@ namespace NETMVCBlot.Controllers
         }
     }
 
+    // ... (omitted)
     public class CodeInjectionController : Controller
     {
         public ActionResult Index()

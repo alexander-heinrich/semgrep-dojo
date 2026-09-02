@@ -41,7 +41,7 @@ sources:
     license: MIT
     copyright: ".NET Foundation and Contributors"
     url: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs
-    lines: [4, 76]
+    lines: [4, 56]
     modified: true
     modification_note: "File-scoped namespace turned into a block; the GET Login, ValidateLogin and AccessDenied members replaced by `// ... (omitted)`; annotation comments added."
   - repo: Soham7-dev/AspGoat
@@ -50,6 +50,6 @@ sources:
     license: MIT
     copyright: "2025 Soham Das"
     url: https://github.com/Soham7-dev/AspGoat/blob/db3153f5dae036a9d67e12be22548299855c6b40/Controllers/HomeController.cs
-    lines: [6, 76]
+    lines: [58, 78]
     modified: true
-    modification_note: "Only the class shell and the OpenRedirect action kept; other members replaced by `// ... (omitted)`; annotation comment added."
+    modification_note: "Only the class shell and the OpenRedirect action kept; other members replaced by `// ... (omitted)`; the class-level `[Authorize]` attribute dropped; annotation comment added."

@@ -35,14 +35,17 @@ followup: |
 
   The other keys are documentation and control, not matching: `metadata` travels with every finding
   (CWE, references, categories), `min-version` makes older CLIs skip a rule that uses newer syntax,
-  and `severity` sets the finding level. Sinks also accept `exact: true` when the *whole* expression
-  must be tainted rather than any part of it — the default is `exact: false` for sinks written as
-  bare patterns, which is why `$OUT.Write($BUF, ...)` fires when only `$BUF` is tainted.
+  and `severity` sets the finding level. Sinks also accept `exact`, and its default for sinks is
+  `true` (the opposite of sources and sanitizers): for a call sink such as `$OUT.Write($BUF, ...)`
+  the call's *arguments* are the sinks, which is why the unfocused form fires when only `buffer` is
+  tainted; taint that sits inside an argument without flowing into its value (the docs' example is
+  `sink("foo" if tainted else "bar")`) only counts with `exact: false`.
 
   **Try this:** remove `options:` — still one finding here, because there is only one buffer. Then
   drop `focus-metavariable` from the sink and remove `by-side-effect` again: the finding comes back,
-  because now the *whole* `output.Write(buffer, 0, read)` call is the sink and `read` — the result of
-  the source call — is tainted. Focusing the sink is what made the side effect matter.
+  because now the *whole* `output.Write(buffer, 0, read)` call is the sink, every argument counts, and
+  `read` is tainted — it is the result of `input.Read(buffer, ...)`, a call whose argument is the
+  source. Focusing the sink is what made the side effect matter.
 sources:
   - repo: sshnet/SSH.NET
     path: src/Renci.SshNet/ScpClient.cs

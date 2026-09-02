@@ -14,8 +14,9 @@ instructions: |
 
   The starter matches both assignments. We want to look *inside* what `$V` captured and keep only
   values that are **not** `TypeNameHandling.None`. `metavariable-pattern` does exactly that: it runs
-  a nested pattern block — `pattern`, `patterns`, `pattern-either`, `pattern-not`… — on the
-  captured expression, as if it were a tiny file of its own.
+  a nested pattern block — `pattern`, `patterns` or `pattern-either` (a `pattern-not` is only
+  allowed inside that nested `patterns:` list) — on the captured expression, as if it were a tiny
+  file of its own.
 
   Add a `metavariable-pattern` entry on `$V` whose nested `patterns:` accepts `TypeNameHandling.$MODE`
   but rejects `TypeNameHandling.None`.
@@ -46,4 +47,4 @@ sources:
     url: https://github.com/JamesNK/Newtonsoft.Json/blob/09bb545d72969ad7fb4ea07db0d5c34f4fc07877/Src/Newtonsoft.Json.Tests/Issues/Issue2735.cs
     lines: [4, 36]
     modified: true
-    modification_note: "License header, the test body and helper classes replaced by `// ... (omitted)`; `#if` directives dropped; annotation comments added."
+    modification_note: "License header dropped; the test body and helper classes replaced by `// ... (omitted)`; `#if` directives and the `DNXCORE50` `using` branch dropped; annotation comments added."

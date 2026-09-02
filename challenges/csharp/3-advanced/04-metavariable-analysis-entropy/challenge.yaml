@@ -14,12 +14,14 @@ instructions: |
 
   `metavariable-analysis` runs a built-in analyzer over a captured value. The `entropy` analyzer
   reports strings whose character distribution looks random enough to be a key or token; the `redos`
-  analyzer (the other one available) flags regular expressions vulnerable to catastrophic
-  backtracking.
+  analyzer flags regular expressions vulnerable to catastrophic backtracking. Those are the two the
+  open-source engine implements — the rule schema also accepts `entropy_v2`, but that one needs the
+  Pro engine and quietly matches nothing in the plain CLI.
 
   Add a `metavariable-analysis` entry under `patterns:` so that only the high-entropy `TokenSecret`
   matches and the three role names do not.
 hints:
+  - "The entry takes two keys: `metavariable:` names the capture to inspect and `analyzer:` names the built-in check. You want the *value*, not the name, and the analyzer that measures randomness."
   - "`- metavariable-analysis: {metavariable: $V, analyzer: entropy}`"
 followup_title: Correct!
 followup: |
@@ -33,7 +35,9 @@ followup: |
 
   **Try this:** add a fifth constant `public const string Greeting = "hello hello hello";` to the
   target in your local checkout — low entropy, no match. Then paste a real API key or a long
-  base64 blob — the analyzer flags it, no hex required.
+  base64 blob — the analyzer flags it, no hex required. It is only a heuristic, though:
+  `"The quick brown fox jumps over the lazy dog"` is flagged as well — letter-diverse English looks
+  random enough — while `"http://localhost.local/"` is not.
 sources:
   - repo: appsecco/dvcsharp-api
     path: Models/User.cs

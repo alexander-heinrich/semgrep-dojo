@@ -1,6 +1,6 @@
 // Source: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Controllers/ProductsController.cs  (lines 1-92)
 // Copyright (c) 2022 Appsecco Ltd. Licensed under MIT. See THIRD_PARTY_NOTICES.md.
-// Modified for this tutorial: yes — the Get, Post and Search actions replaced by `// ... (omitted)`; annotation comments added.
+// Modified for this tutorial: yes — the Get, Post and Search actions replaced by `// ... (omitted)`; annotation comment added.
 using System;
 using System.Collections.Generic;
 using System.Linq;

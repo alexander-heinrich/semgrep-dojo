@@ -8,7 +8,7 @@ covers:
   rule_keys: [options, pattern]
 instructions: |
   This JWT is created with `issuer: issuer` — a local variable, not a literal. Yet the local was
-  assigned the literal `"http://localhost.local/"` two lines earlier. Whether the pattern
+  assigned the literal `"http://localhost.local/"` earlier in the same method (line 27). Whether the pattern
   `new $T(..., issuer: "...", ...)` (a named argument with a string-literal value) matches depends on
   **constant propagation**.
 
@@ -19,7 +19,7 @@ instructions: |
   Rule-level `options:` toggle engine behaviours for one rule. Change the option so that the token
   construction is reported.
 hints:
-  - "Look at the `options:` block; the value of `constant_propagation` is the only thing to change. (The pattern stays quoted: it contains `issuer:` which YAML would otherwise read as a key.)"
+  - "Look at the `options:` block; the value of `constant_propagation` is the only thing to change. (The pattern stays quoted: it contains `issuer:` which unquoted YAML would take for a mapping key and reject.)"
   - "`constant_propagation: true` (or simply delete the `options:` block — true is the default)."
 followup_title: Correct!
 followup: |
@@ -32,9 +32,9 @@ followup: |
   `$ENC.GetBytes("...")` there. The 2023 browser engine on this site only follows locals and
   literal concatenation, so this challenge sticks to the `issuer` local.
 
-  `options:` holds a handful of such switches. Two others you will meet in Level 3:
-  `symmetric_eq` (treat `a == b` and `b == a` alike) and `taint_unify_mvars` (require the same
-  metavariable binding at a taint source and sink).
+  `options:` holds a handful of such switches. Two others: `symmetric_eq` (treat `a == b` and
+  `b == a` alike) and `taint_unify_mvars` (require the same metavariable binding at a taint source
+  and sink), which you will meet in Level 3.
 
   **Try this:** set `constant_propagation: false` again and change the pattern to
   `new $T(..., issuer: issuer, ...)` — an exact name works regardless of propagation, but it is

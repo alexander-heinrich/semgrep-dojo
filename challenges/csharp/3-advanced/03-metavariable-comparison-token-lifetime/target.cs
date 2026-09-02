@@ -1,6 +1,6 @@
-// Source: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Models/User.cs  (lines 1-69) and https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Controllers/AccountController.cs  (lines 1-33)
+// Source: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Models/User.cs  (lines 1, 6-7, 10-13, 40-69, 102-103) and https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Controllers/AccountController.cs  (lines 8-10, 16-20, 24-33, 500-501)
 // Copyright (c) 2022 Appsecco Ltd. (MIT); Copyright (c) 2023 CodeThreat (MIT). See THIRD_PARTY_NOTICES.md.
-// Modified for this tutorial: yes — two files combined; unrelated members replaced by `// ... (omitted)`; annotation comments added.
+// Modified for this tutorial: yes — two files combined; unrelated members replaced by `// ... (omitted)`; unused using directives dropped; annotation comments added.
 using System;
 using System.Security.Claims;
 using System.Text;

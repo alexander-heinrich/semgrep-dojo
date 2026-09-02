@@ -1,6 +1,6 @@
-// Source: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs  (lines 4-54) and https://github.com/Soham7-dev/AspGoat/blob/db3153f5dae036a9d67e12be22548299855c6b40/Controllers/HomeController.cs  (lines 21-25, 159-168)
+// Source: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs  (lines 4-54, 61-66) and https://github.com/Soham7-dev/AspGoat/blob/db3153f5dae036a9d67e12be22548299855c6b40/Controllers/HomeController.cs  (lines 18, 21-22, 159-168, 444)
 // Copyright (c) .NET Foundation and Contributors (MIT); Copyright (c) 2025 Soham Das (MIT). See THIRD_PARTY_NOTICES.md.
-// Modified for this tutorial: yes — two files combined; file-scoped namespace turned into a block; unrelated members replaced by `// ... (omitted)`; annotation comments added.
+// Modified for this tutorial: yes — two files combined; file-scoped namespace turned into a block; unrelated members replaced by `// ... (omitted)`; the class-level `[Authorize]` attribute in HomeController dropped; annotation comments added.
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -43,6 +43,8 @@ namespace AuthSamples.Cookies.Controllers
 
             return View();
         }
+
+        // ... (omitted)
 
         public async Task<IActionResult> Logout()
         {
