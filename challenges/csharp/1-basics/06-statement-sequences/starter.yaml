@@ -1,0 +1,9 @@
+rules:
+  - id: sql-connection-opened
+    message: SQL connection $C is created and opened in this method; make sure it is closed or disposed on every path
+    languages: [csharp]
+    severity: WARNING
+    pattern: |
+      $C = new SqlConnection(...);
+      ...
+      $C.Open();

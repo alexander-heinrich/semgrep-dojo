@@ -1,0 +1,47 @@
+title: pattern-either — any of these
+level: 2
+difficulty: 2
+rule_id: weak-hash-algorithm
+tags: [pattern-either, security]
+covers:
+  cheatsheet: [function-call]
+  rule_keys: [pattern-either, pattern]
+instructions: |
+  PowerToys Run's value generator keeps a table of hash algorithms — from MD5 to SHA-512. The
+  developers even left `#pragma` notes on the two that .NET's analyzers flag as broken (MD5) or
+  weak (SHA-1).
+
+  A single `pattern:` can express one shape. To say "this **or** that", a rule uses
+  `pattern-either:` with a list of alternatives; a match on any of them counts.
+
+  The starter finds `MD5.Create()`. Change it into a `pattern-either` that also reports
+  `SHA1.Create()`, while the SHA-2 family stays untouched.
+hints:
+  - "Replace `pattern:` with `pattern-either:` followed by a YAML list of `- pattern:` entries."
+  - "Two alternatives: `MD5.Create()` and `SHA1.Create()`."
+followup_title: Correct!
+followup: |
+  `pattern-either` is an OR over complete patterns. Each alternative is matched on its own and the
+  results are merged, so a line that two alternatives both hit still counts once here — grading is
+  by line. (The CLI also drops duplicate findings on the same range; the older browser engine keeps
+  them apart in the "raw matches" list.)
+
+  It can be nested anywhere a pattern is allowed — inside `patterns:` (AND) to express
+  "one of these, AND not inside that", or inside a taint source/sink list. A production rule for weak
+  hashing would add more alternatives for the older constructors, such as
+  `new MD5CryptoServiceProvider()` and `new SHA1Managed()`.
+
+  **Try this:** add `- pattern: $ALG.Create()` as a third alternative — all five table entries match,
+  because the alternatives are independent and the last one is the loosest. Then swap `pattern-either`
+  for `patterns`: now the entries are ANDed, and nothing can be both `MD5.Create()` and `SHA1.Create()`,
+  so you get zero matches.
+sources:
+  - repo: microsoft/PowerToys
+    path: src/modules/launcher/Plugins/Community.PowerToys.Run.Plugin.ValueGenerator/Generators/Hashing/HashRequest.cs
+    commit: 911e614e1cfb4ac5bec333fa1073a63bbeec4a99
+    license: MIT
+    copyright: "Microsoft Corporation"
+    url: https://github.com/microsoft/PowerToys/blob/911e614e1cfb4ac5bec333fa1073a63bbeec4a99/src/modules/launcher/Plugins/Community.PowerToys.Run.Plugin.ValueGenerator/Generators/Hashing/HashRequest.cs
+    lines: [4, 60]
+    modified: true
+    modification_note: "Members after the constructor replaced by `// ... (omitted)`; annotation comments added."

@@ -1,0 +1,60 @@
+title: Named arguments match in any order
+level: 1
+difficulty: 2
+rule_id: stored-procedure-call
+tags: [named-arguments, ellipsis]
+covers:
+  cheatsheet: [key-value-pairs-named-arguments]
+  rule_keys: [pattern]
+wasm: expected
+instructions: |
+  C# lets a caller pass an argument **by name**. Dapper's query methods all take an optional
+  `commandType`, and this test file always passes it as `commandType: CommandType.StoredProcedure` —
+  as the second argument on line 82, as the third on line 61, and on line 39 *every* argument is
+  named, `sql:` and `param:` included.
+
+  The starter rule `$CONN.$METHOD(..., CommandType.StoredProcedure)` treats `CommandType.StoredProcedure`
+  as an ordinary positional argument, and it matches nothing: the name is part of a named argument, so a
+  positional argument in a pattern never matches a named argument in the code.
+
+  Change the last argument of the pattern into a named argument, `commandType: CommandType.StoredProcedure`,
+  and put `...` on both sides of it. The rule should then report the three calls on lines 39, 61 and 82
+  and leave lines 24 and 26 alone.
+
+  One thing to watch: the pattern now contains `commandType:` followed by a space, which YAML would read
+  as a nested key. Keep the pattern inside the quotes the starter already uses.
+hints:
+  - "A named argument in a pattern is written the way C# writes it: `name: value`. The name must be the parameter's name, here `commandType`."
+  - "Semgrep matches a named argument by its name, not by its position, so surround it with `...` on both sides and it is found wherever the caller put it."
+  - "If the rule fails to parse as YAML (`bad indentation of a mapping entry` in the browser, `mapping values are not allowed here` in the CLI), the `commandType:` inside the pattern is being parsed as a key — the whole pattern must stay in quotes."
+  - "The whole pattern is `'$CONN.$METHOD(..., commandType: CommandType.StoredProcedure, ...)'`, quotes included."
+followup_title: Correct!
+followup: |
+  `$CONN.$METHOD(..., commandType: CommandType.StoredProcedure, ...)` matches lines 39, 61 and 82
+  because Semgrep matches a named argument **by its name**, not by its place in the list; the two `...`
+  absorb whatever else the caller wrote before and after it. One pattern therefore covers a call where
+  `commandType:` is the second argument, one where it is the third, and one where all three arguments
+  are named. Line 24 is not reported: `direction:` and `size:` are different names.
+
+  The starter failed because `CommandType.StoredProcedure` without a name is a *positional* argument,
+  and positional and named arguments never match each other — in either direction.
+
+  The trailing `...` matters as soon as something follows the named argument: on line 24 `size: 255`
+  comes after `direction: ParameterDirection.Output`, so `$P.Add(..., direction: ParameterDirection.Output)`
+  misses that line while `$P.Add(..., direction: ParameterDirection.Output, ...)` finds it.
+
+  **Try this:** replace the first `...` with `$SQL`. Lines 61 and 82 still match, but line 39 drops
+  out — there the SQL text is passed as `sql: "..."`, and a positional metavariable does not bind a
+  named argument either. Then try `$P.Add(..., direction: ParameterDirection.Output, dbType: DbType.Int32, ...)`:
+  it matches line 22 although the code lists `dbType:` first, because the order of named arguments
+  in the pattern does not matter.
+sources:
+  - repo: DapperLib/Dapper
+    path: tests/Dapper.Tests/ProcedureTests.cs
+    commit: 6d48ef664acc7298c649e2d449d903b3360d5a90
+    license: Apache-2.0
+    copyright: "Stack Exchange, Inc."
+    url: https://github.com/DapperLib/Dapper/blob/6d48ef664acc7298c649e2d449d903b3360d5a90/tests/Dapper.Tests/ProcedureTests.cs
+    lines: [4, 91]
+    modified: false
+    modification_note: ""

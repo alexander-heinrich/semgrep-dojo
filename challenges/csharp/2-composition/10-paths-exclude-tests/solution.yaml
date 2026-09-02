@@ -1,0 +1,9 @@
+rules:
+  - id: dapper-execute-in-tests
+    message: raw SQL executed through Dapper
+    languages: [csharp]
+    severity: INFO
+    paths:
+      exclude:
+        - "tests/**"
+    pattern: "$C.$M(..., commandType: CommandType.StoredProcedure, ...)"

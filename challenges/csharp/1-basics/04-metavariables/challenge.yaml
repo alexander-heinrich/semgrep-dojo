@@ -1,0 +1,44 @@
+title: Metavariables capture, string ellipsis restricts
+level: 1
+difficulty: 1
+rule_id: claim-literal-value
+tags: [metavariable, string-literal, ellipsis]
+covers:
+  cheatsheet: [argument, wildcard-strings]
+  rule_keys: [pattern]
+instructions: |
+  A **metavariable** is a placeholder that starts with `$` and matches exactly one expression:
+  `$TYPE` in `new Claim($TYPE, $VALUE)` matches whatever is passed as the first argument, and the
+  value it matched is available in the rule `message` as `$TYPE`.
+
+  The starter rule uses two metavariables, so it matches *every* `new Claim(...)` in this ASP.NET
+  Core sample. We only want the claim whose value is a **hard-coded string** (`"Member"`), not the one
+  that comes from a variable (`userName`).
+
+  Try replacing the second metavariable with `"..."` — the string wildcard matches any string
+  literal, and only string literals.
+hints:
+  - "`\"...\"` (three dots inside quotes) is a pattern for *any* string literal."
+  - "Keep `$TYPE` for the first argument; change only the second one."
+followup_title: Correct!
+followup: |
+  `new Claim($TYPE, "...")` matches `new Claim("role", "Member")` because `"Member"` is a string
+  literal, while `userName` is a method parameter whose value Semgrep cannot know, so `"..."` does not
+  match it.
+
+  Notice that the match is reported on line 40 only: Semgrep reports the *expression* `new Claim(...)`, not the
+  whole initializer. Also notice that whitespace and line breaks in the target never matter.
+
+  **Try this:** change the pattern to `new Claim("...", $V)` — now both claims match, because both
+  first arguments are literals. Then try `new Claim($T, $T)` — nothing matches, because reusing a
+  metavariable requires *both* arguments to be the same expression.
+sources:
+  - repo: dotnet/aspnetcore
+    path: src/Security/samples/Cookies/Controllers/AccountController.cs
+    commit: 6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs
+    lines: [4, 69]
+    modified: true
+    modification_note: "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; two annotation comments added."

@@ -1,0 +1,44 @@
+title: pattern-not — subtract what you don't want
+level: 2
+difficulty: 2
+rule_id: redirect-to-variable
+tags: [pattern-not, patterns, string-literal]
+covers:
+  cheatsheet: [wildcard-strings]
+  rule_keys: [patterns, pattern, pattern-not]
+instructions: |
+  Level 2 is about **composing** patterns. A `patterns:` block is a logical AND: every entry must
+  hold for a match to survive. The simplest entry after `pattern` is `pattern-not`, which *removes*
+  matches.
+
+  This ASP.NET Core sample controller redirects three times. Two redirects go to the fixed URL `"/"`
+  and are harmless; the third sends the user to `returnUrl`, a value that came from the request and
+  needs a local-URL check. The starter matches all three.
+
+  Add a `pattern-not` entry so that redirects to a string literal are excluded and only
+  `Redirect(returnUrl)` remains.
+hints:
+  - "Under `patterns:` add a second list item: `- pattern-not: ...`."
+  - "The thing to exclude is a redirect to *any* string literal: `Redirect(\"...\")`."
+followup_title: Correct!
+followup: |
+  `pattern-not: Redirect("...")` removes every match whose range is *also* matched by that pattern.
+  The two `Redirect("/")` calls are literal redirects and disappear; `Redirect(returnUrl)` stays.
+
+  Order inside `patterns:` does not matter — Semgrep evaluates positive patterns first, then the
+  negative ones. And a `patterns:` block with a single `pattern` entry is the same as a bare
+  `pattern:`; the block only becomes interesting once you add filters.
+
+  **Try this:** flip it around — keep `pattern: Redirect($U)` and add `pattern-not: Redirect($V)`
+  with a *different* metavariable name. Everything disappears: `$V` matches any argument, so the
+  negative pattern cancels every match. Metavariable names only unify within one pattern.
+sources:
+  - repo: dotnet/aspnetcore
+    path: src/Security/samples/Cookies/Controllers/AccountController.cs
+    commit: 6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs
+    lines: [4, 71]
+    modified: true
+    modification_note: "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; annotation comments added."

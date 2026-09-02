@@ -1,0 +1,46 @@
+title: The ellipsis never climbs out of a block
+level: 2
+difficulty: 3
+rule_id: request-to-deserialize
+tags: [block-scope, ellipsis, wildcard-statements]
+covers:
+  cheatsheet: [wildcard-statements, nested-statements]
+  rule_keys: [pattern]
+instructions: |
+  A statement-sequence pattern `A; ... B;` matches when `B` comes *after* `A`. The ellipsis may dive
+  into nested blocks that follow `A` — a `try`, an `if`, a loop — and it may come back up again. What
+  it can never do is climb **above the block in which the sequence started**.
+
+  The starter starts *inside* the `try` block of `InsecureDeserialization` (`new StringReader(xml)`),
+  continues to the `Deserialize` call in the same block, and then asks for `return View();` — which
+  lives in the method body, one level above the `try`. Run it: **no match**.
+
+  Remove the part of the pattern that would require climbing out of the `try`, so that the flow
+  from the `StringReader` to `Deserialize` is reported.
+hints:
+  - "Which statement in the pattern is outside the `try` block in the code, while the sequence started inside it?"
+  - "Delete the trailing `...` and `return View();` — the pattern then stays inside the `try`."
+followup_title: Correct!
+followup: |
+  Think of `...` between statements as "keep walking forward": it may go down into nested blocks
+  and back out to the level it started from, but never higher. Starting at `new StringReader(xml)`
+  inside the `try`, the walk can reach `Deserialize(...)` in the same block, but `return View();`
+  is outside that block — unreachable.
+
+  Had the sequence started at `var xml = RequestUtils.GetIfDefined(Request, "xml");` in the method
+  body, the very same trailing `... return View();` would have been fine: from there the walk goes
+  down into the `try`, finds `Deserialize`, comes back up to the method body and finds the `return`.
+
+  **Try this:** prepend `var $X = RequestUtils.GetIfDefined(Request, "..."); ...` to the *starter*
+  pattern (keeping its `return View();` tail) — it matches now, with the match starting at the
+  `var xml` line. Then try the same on `XXE`: no `StringReader` there, so the middle line fails.
+sources:
+  - repo: HooliCorp/vulnerable_net_core
+    path: vulnerable_asp_net_core/Controllers/SL.cs
+    commit: a20ecb5fcac9edaf1732729dc2bc3b2e81894552
+    license: Apache-2.0
+    copyright: "HooliCorp"
+    url: https://github.com/HooliCorp/vulnerable_net_core/blob/a20ecb5fcac9edaf1732729dc2bc3b2e81894552/vulnerable_asp_net_core/Controllers/SL.cs
+    lines: [4, 89]
+    modified: true
+    modification_note: "Unrelated actions and fields replaced by `// ... (omitted)`; annotation comment added."

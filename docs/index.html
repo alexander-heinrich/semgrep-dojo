@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semgrep Dojo — C# rule-writing practice</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥋</text></svg>">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><a href="./">🥋 Semgrep Dojo</a><span class="sub">practice writing Semgrep rules for C#, in your browser</span></div>
+  <nav><a href="about.html">About &amp; licences</a><a href="https://github.com/alexander-heinrich/learn-semgrep">GitHub</a></nav>
+</header>
+<main class="home">
+  <section class="hero">
+    <h1>Learn Semgrep syntax on real C# code</h1>
+    <p>Each challenge gives you a snippet from an open-source .NET project and asks for a rule that matches
+       exactly the marked lines. Your rule runs <em>in the browser</em> on a WebAssembly build of the Semgrep engine —
+       nothing leaves your machine. Cheatsheet entries and rule keys are covered one at a time, from
+       <code>$METAVARIABLES</code> to taint mode.</p>
+    <div id="progress" class="progress"></div>
+  </section>
+  <section class="picks">
+    <div id="daily" class="card"></div>
+    <div id="resume" class="card"></div>
+  </section>
+  <section>
+    <div class="filters"><span class="label">Filter by feature:</span><span id="tags"></span></div>
+    <div id="levels"></div>
+  </section>
+  <footer>
+    <p>Engine snapshot: <span id="engine-info"></span>. Some challenges are marked <em>CLI only</em> because the 2023
+       browser engine cannot run them; use <code>scripts/check.py</code> for those.
+       <a href="#" id="reset">Reset progress</a></p>
+  </footer>
+</main>
+<script type="module" src="js/app-home.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+rules:
+  - id: sqlite-injection
+    message: request data reaches a SQLite query
+    languages: [csharp]
+    severity: ERROR
+    pattern: new SQLiteCommand($Q, ...)

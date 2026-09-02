@@ -1,0 +1,6 @@
+rules:
+  - id: weak-hash-algorithm
+    message: MD5 and SHA-1 are broken for security purposes; prefer SHA-256 or better
+    languages: [csharp]
+    severity: WARNING
+    pattern: MD5.Create()

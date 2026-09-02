@@ -1,0 +1,8 @@
+rules:
+  - id: hardcoded-issuer
+    message: token issuer is a hard-coded string
+    languages: [csharp]
+    severity: WARNING
+    options:
+      constant_propagation: false
+    pattern: 'new $T(..., issuer: "...", ...)'

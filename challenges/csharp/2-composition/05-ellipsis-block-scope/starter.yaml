@@ -1,0 +1,11 @@
+rules:
+  - id: request-to-deserialize
+    message: request data $X ends up in an XmlSerializer.Deserialize call
+    languages: [csharp]
+    severity: ERROR
+    pattern: |
+      var $SR = new StringReader($X);
+      ...
+      $SER.Deserialize($R);
+      ...
+      return View();

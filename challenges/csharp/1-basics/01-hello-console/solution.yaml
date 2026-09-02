@@ -1,0 +1,6 @@
+rules:
+  - id: press-any-key
+    message: Exit prompt found - this method waits for the user before it returns
+    languages: [csharp]
+    severity: INFO
+    pattern: Console.WriteLine("Press any key to exit.")

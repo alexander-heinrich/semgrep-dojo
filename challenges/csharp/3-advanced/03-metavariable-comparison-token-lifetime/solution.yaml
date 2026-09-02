@@ -1,0 +1,10 @@
+rules:
+  - id: long-lived-expiry
+    message: expiry of $N minutes is longer than the 15-minute policy
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern: DateTime.Now.AddMinutes($N)
+      - metavariable-comparison:
+          metavariable: $N
+          comparison: $N > 15

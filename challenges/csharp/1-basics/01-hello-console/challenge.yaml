@@ -1,0 +1,56 @@
+title: A pattern is just code
+level: 1
+difficulty: 1
+intro: true
+rule_id: press-any-key
+tags: [exact-match, any-depth]
+covers:
+  cheatsheet: [single-statements, expression-and-statement, imports]
+  rule_keys: [pattern, severity]
+instructions: |
+  Welcome to the dojo. A Semgrep rule is a small YAML document with a handful of keys: an `id`, a
+  `message` that is shown with every finding, the `languages` it applies to, a `severity` label
+  (`INFO`, `WARNING` or `ERROR` — it does not change what matches) and, the part that does the work,
+  a `pattern`.
+
+  A pattern is not a regular expression. It is a piece of C# code, written exactly as you would type
+  it in a program, and Semgrep reports every place where that code occurs. The rule in the editor
+  looks for `Console.WriteLine("Press any key to exit.")` in a small test app from MQTTnet.
+
+  The prompt appears three times in the target: in two plain methods and once deep inside a `try`
+  block of an `async` method. One of the calls is even split over two lines. Semgrep compares syntax
+  trees, not text, so whitespace, line breaks and nesting depth never matter, and you never have to
+  describe the class or method around the code you are looking for.
+
+  Try running the rule as it is. Lines 21, 35 and 62 should light up, while `Console.Write(...)` on
+  line 55 and `Console.WriteLine(e)` on line 70 stay quiet: they are different code.
+hints:
+  - "There is nothing to fix in this first step: press Run and compare the highlighted lines with the `// ruleid:` comments in the target."
+  - "If you edited the pattern by accident, restore it to `Console.WriteLine(\"Press any key to exit.\")`, including the final period inside the quotes."
+followup_title: That is all a pattern is
+followup: |
+  Semgrep parsed your pattern with the same C# parser it used for the target, then searched the
+  target's syntax tree for an equal subtree. That is why it found the call inside `RunEmptyServer`
+  just as easily as the one nested in a `try` block of an `async` method, and why the call split
+  over lines 35-36 still matched: once the code is parsed, the line break is gone. You also did not
+  write the trailing semicolon. An expression pattern matches the expression wherever it appears,
+  whether it is a statement of its own or part of a bigger one.
+
+  The match is exact on the code, though. `Console.Write("...")` is a different method and
+  `Console.WriteLine(e)` has a different argument, so neither was reported.
+
+  **Try this:** change the literal to `"Press any key to exit"` (no period) and run again: every
+  match disappears, because that exact string never occurs in the file. Then try `Console.ReadLine()`
+  (four matches) and, since a pattern is just code, `using $X;` — it matches all six `using`
+  directives. The `$X` is a *metavariable*, a placeholder for "any name", and metavariables are the
+  topic of the next lessons.
+sources:
+  - repo: dotnet/MQTTnet
+    path: Source/MQTTnet.TestApp/ServerTest.cs
+    commit: 18731d9f02345a0fcec899ebfbd4bff7c05a57ce
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/MQTTnet/blob/18731d9f02345a0fcec899ebfbd4bff7c05a57ce/Source/MQTTnet.TestApp/ServerTest.cs
+    lines: [4, 76]
+    modified: true
+    modification_note: "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; the comments, commented-out code, a local `const string filename` and the event handlers inside RunAsync dropped and replaced by a single `// ... (omitted)`; the second Console.WriteLine call (lines 35-36) split over two lines to show that line breaks do not matter; annotation comments added."

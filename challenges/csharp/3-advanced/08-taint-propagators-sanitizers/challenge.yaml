@@ -1,0 +1,54 @@
+title: Taint mode — sanitizers and propagators
+level: 3
+difficulty: 5
+rule_id: untrusted-xml-content
+tags: [taint, pattern-sanitizers, pattern-propagators, security]
+covers:
+  cheatsheet: [wildcard-statements]
+  rule_keys: [pattern-sanitizers, pattern-propagators, pattern-sources, pattern-sinks, mode-taint]
+instructions: |
+  Two flows in this controller, and the starter gets both wrong.
+
+  In `SQLInjection`, request data flows through the query into `reader`, into `res`, and into
+  `Show(...)` — but it passes through `_javaScriptEncoder.Encode(...)` first. The starter reports
+  that call anyway. A **sanitizer** is a pattern whose result is considered clean; add
+  `pattern-sanitizers` so that encoded values no longer count.
+
+  In `XXE`, the request XML goes into `xmlDoc.LoadXml(xml)`. Nothing is *returned* from that call,
+  so as far as default taint tracking is concerned `xmlDoc` stays clean and iterating it with
+  `foreach` — the second sink — is never reported. A **propagator** teaches Semgrep that a call
+  moves taint from one argument to another object: `pattern-propagators` with `from:` and `to:`.
+  Add one for `LoadXml`.
+
+  Expected result: exactly one finding, the `foreach` over the document; every `Show(...)` is clean.
+hints:
+  - "`pattern-sanitizers:` takes the same kind of entries as sinks: `- pattern: _javaScriptEncoder.Encode(...)`."
+  - "`pattern-propagators:` entries need three keys: `pattern: $DOC.LoadXml($XML)`, `from: $XML`, `to: $DOC`."
+followup_title: Correct!
+followup: |
+  Sanitizers cut a flow: whatever `_javaScriptEncoder.Encode(...)` returns is clean, so the
+  `Show(...)` call that only receives encoded data stops being reported. Propagators extend a flow:
+  `xmlDoc.LoadXml(xml)` returns nothing, so without the propagator the document would never be
+  tainted; with `from: $XML` / `to: $DOC` the taint of the argument is copied onto the receiver by
+  side effect, and the `foreach` over `xmlDoc` is now a tainted sink.
+
+  Note the line inside the loop: `xn` is tainted too (Semgrep follows `foreach`), but the
+  `Show(...)` there only receives `_javaScriptEncoder.Encode(xn.InnerText)`, which the sanitizer
+  cleans — so it stays quiet.
+
+  Propagators are how registry rules model `StringBuilder.Append`, `List.Add`, `Dictionary` writes
+  and similar "taint goes in here, comes out there" APIs.
+
+  **Try this:** delete the sanitizer and keep the propagator — three findings, since both encoded
+  `Show(...)` calls are reported again. Then change the propagator's `to:` to `$XML`: nothing
+  propagates any more (the taint already lives in `$XML`).
+sources:
+  - repo: HooliCorp/vulnerable_net_core
+    path: vulnerable_asp_net_core/Controllers/SL.cs
+    commit: a20ecb5fcac9edaf1732729dc2bc3b2e81894552
+    license: Apache-2.0
+    copyright: "HooliCorp"
+    url: https://github.com/HooliCorp/vulnerable_net_core/blob/a20ecb5fcac9edaf1732729dc2bc3b2e81894552/vulnerable_asp_net_core/Controllers/SL.cs
+    lines: [4, 98]
+    modified: true
+    modification_note: "Unrelated actions and fields replaced by `// ... (omitted)`; annotation comments added."

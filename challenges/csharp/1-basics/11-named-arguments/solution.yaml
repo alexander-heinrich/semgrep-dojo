@@ -1,0 +1,6 @@
+rules:
+  - id: stored-procedure-call
+    message: $CONN.$METHOD executes a stored procedure
+    languages: [csharp]
+    severity: INFO
+    pattern: '$CONN.$METHOD(..., commandType: CommandType.StoredProcedure, ...)'

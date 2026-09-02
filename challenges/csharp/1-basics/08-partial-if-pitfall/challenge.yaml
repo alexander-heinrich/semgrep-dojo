@@ -1,0 +1,68 @@
+title: The if ($C) pitfall
+level: 1
+difficulty: 2
+rule_id: null-or-empty-guard
+tags: [partial-statement, ellipsis, conditionals]
+covers:
+  cheatsheet: [conditionals, nested-statements, statement]
+  rule_keys: [pattern]
+wasm: expected
+starter_expects_error: false
+instructions: |
+  Most patterns so far were *expressions* — a call, a `new`, a comparison. The statement-sequence
+  challenge showed the other kind: **statements**, each ending in `;`. An `if` is a statement too,
+  and statement patterns come with one rule that catches almost everybody once: the pattern has
+  to be a *complete* statement.
+
+  The target is OrchardCore's `EmailConfirmationController`. `SendVerificationEmail` guards the
+  `id` parameter twice with `string.IsNullOrEmpty` (lines 52 and 58). We want a rule that reports
+  exactly those two `if` statements — not the `== null` checks, not the compound condition on
+  line 65, and not the negated `!string.IsNullOrWhiteSpace(...)` on line 82.
+
+  The starter, `if (string.IsNullOrEmpty($X))`, looks like the obvious way to say "an `if` with
+  this condition". Run it: no error, but no match either. Semgrep could not read the pattern as a
+  statement (an `if` needs a body), so it read it as an expression instead — a *call to a method
+  named `if`* — and nothing in the file calls a method named `if`.
+
+  Change the starter into a complete `if` statement so that lines 52 and 58 are reported and
+  nothing else.
+hints:
+  - "Semgrep parses a pattern with the same grammar as the code. `if (x)` on its own is not a complete statement — but Semgrep's lenient pattern parser can read `if(x)` as an *expression*: a call to a method named `if`. That is what the starter looks for, so it finds nothing."
+  - "Give the `if` a body. Inside braces, `...` stands for any sequence of statements, so the body stays unconstrained."
+  - "In current Semgrep `if (string.IsNullOrEmpty($X)) { ... }` is the canonical answer. The 2023 browser engine on this site has a bug with a lone `...` in an `if` body after a call condition — write the body as `{ $S; ... }` (one statement, then anything); both engines accept that."
+followup_title: That's it!
+followup: |
+  `if (string.IsNullOrEmpty($X)) { $S; ... }` is a complete statement, so Semgrep compares it with the
+  `if` statements in the file: the condition must be a call to `string.IsNullOrEmpty` with one
+  argument, and the body accepts any non-empty statement list — an assignment on line 52, a `return`
+  on line 58. With the real Semgrep CLI the idiomatic body is simply `{ ... }`; the browser engine
+  on this site is a 2023 snapshot that mishandles a lone `...` after a call condition, which is why
+  the site suggests `{ $S; ... }` when you use `{ ... }` here. The other checks have different
+  conditions (`user == null`, `a && b`, the negated `!string.IsNullOrWhiteSpace(...)`), so they
+  are left alone.
+
+  Two details are worth remembering. The braces in the pattern do not require braces in the code:
+  `{ ... }` and one-statement bodies such as `{ $S; }` or `{ return NotFound(); }` also match a
+  brace-less body like `if (string.IsNullOrEmpty(id)) return NotFound();` (the two-element
+  workaround `{ $S; ... }` is the exception — it needs a real block), and an `else if` chain is
+  just an `if` nested in an `else`, so a chain yields one match per `if`. And names are compared
+  textually: this code says `string`, so `String.IsNullOrEmpty($X)` would find nothing here,
+  although both spellings mean the same type in C#.
+
+  If you have the CLI at hand, `semgrep show dump-pattern csharp 'if ($C)'` shows the pitfall
+  directly: the dump is an expression (`E(Call(...))`) whose callee is the identifier `if`.
+
+  **Try this:** replace the body with `{ return NotFound(); }` — now only line 58 matches, because
+  the braces describe the body, not just the header. Then use the general form `if ($C) { ... }`:
+  it reports all eight `if` statements in the file, which is the usual starting point when you
+  later narrow the condition down with `pattern-not` or `metavariable-pattern`.
+sources:
+  - repo: OrchardCMS/OrchardCore
+    path: src/OrchardCore.Modules/OrchardCore.Users/Controllers/EmailConfirmationController.cs
+    commit: 7418cecfe38deed1398becb6f3520c4fa7786b6e
+    license: BSD-3-Clause
+    copyright: ".NET Foundation"
+    url: https://github.com/OrchardCMS/OrchardCore/blob/7418cecfe38deed1398becb6f3520c4fa7786b6e/src/OrchardCore.Modules/OrchardCore.Users/Controllers/EmailConfirmationController.cs
+    lines: [4, 90]
+    modified: true
+    modification_note: "File-scoped namespace (C# 10) turned into a block so the 2023 browser parser accepts it; fields, constructor and the ConfirmEmailSent member replaced by `// ... (omitted)`; annotation comments added."

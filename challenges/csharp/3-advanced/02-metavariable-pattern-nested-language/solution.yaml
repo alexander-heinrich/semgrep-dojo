@@ -1,0 +1,14 @@
+rules:
+  - id: razor-template-model-access
+    message: a Razor template string that reads @Model is compiled at runtime
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern-inside: |
+          string $T = $LIT;
+          ...
+      - pattern: Engine.Razor.RunCompile($T, ...)
+      - metavariable-pattern:
+          metavariable: $LIT
+          language: generic
+          pattern: "@Model.$PROP"

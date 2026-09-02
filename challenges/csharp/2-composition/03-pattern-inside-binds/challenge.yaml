@@ -1,0 +1,59 @@
+title: pattern-inside restricts — and binds
+level: 2
+difficulty: 3
+rule_id: redirect-of-parameter
+tags: [pattern-inside, metavariable-equality, any-depth]
+covers:
+  cheatsheet: [function-definitions, nested-statements, class-definitions]
+  rule_keys: [pattern-inside, patterns]
+instructions: |
+  You learned in Level 1 that a bare `Redirect(...)` already matches inside every method, so
+  `pattern-inside` is never needed just to "get inside". Its job is to **restrict**: keep only
+  matches that lie within some enclosing code. The starter's `pattern-inside: $R $M(...) { ... }`
+  restricts nothing — every call is inside some method — so all four redirects match.
+
+  The trick that makes `pattern-inside` powerful is **metavariable unification**: a metavariable bound
+  in the enclosing pattern must take the *same value* in the inner pattern. Here both files
+  redirect to a *string parameter of the method itself* (`returnUrl`), while the harmless redirects go
+  to the literal `"/"`.
+
+  Change the two patterns so that the redirect argument and a `string` parameter of the enclosing
+  method share one metavariable name. The literal redirects must drop out.
+hints:
+  - "Give the parameter a name in the method pattern: `$R $M(..., string $P, ...) { ... }`."
+  - "Use the *same* name in the call: `Redirect($P)`. A literal `\"/\"` can never equal a parameter name."
+followup_title: Correct!
+followup: |
+  `pattern-inside: $R $M(..., string $P, ...) { ... }` binds `$P` to each string parameter of a method
+  (`userName`, `password`, `returnUrl`), and `pattern: Redirect($P)` only matches when the argument
+  *is* one of those names. `Redirect("/")` cannot unify with any parameter and is gone.
+
+  Compare with a shallow version: `patterns` with `pattern: Redirect($U)` and
+  `pattern-inside: $R $M(..., string $P, ...) { ... }` still keeps `Login`'s `Redirect("/")`, because `$U`
+  and `$P` are unrelated names. (Only `Logout`'s `Redirect("/")` drops out — and only because `Logout()`
+  has no `string` parameter at all, not because of what it redirects to.) Unification only happens
+  through *shared* metavariable names.
+
+  **Try this:** add `[HttpGet]` in front of the inside pattern — only AspGoat's `OpenRedirect` remains,
+  since the aspnetcore action is `[HttpPost]`. Then remove it again and add
+  `class AccountController : Controller { ... }` as a second `pattern-inside` — now only `Login` remains:
+  two `pattern-inside` entries are ANDed, like everything under `patterns:`.
+sources:
+  - repo: dotnet/aspnetcore
+    path: src/Security/samples/Cookies/Controllers/AccountController.cs
+    commit: 6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs
+    lines: [4, 78]
+    modified: true
+    modification_note: "File-scoped namespace turned into a block; the GET Login, ValidateLogin and AccessDenied members replaced by `// ... (omitted)`; annotation comments added."
+  - repo: Soham7-dev/AspGoat
+    path: Controllers/HomeController.cs
+    commit: db3153f5dae036a9d67e12be22548299855c6b40
+    license: MIT
+    copyright: "2025 Soham Das"
+    url: https://github.com/Soham7-dev/AspGoat/blob/db3153f5dae036a9d67e12be22548299855c6b40/Controllers/HomeController.cs
+    lines: [6, 78]
+    modified: true
+    modification_note: "Only the class shell and the OpenRedirect action kept; other members replaced by `// ... (omitted)`; the class-level `[Authorize]` attribute dropped; annotation comment added."

@@ -1,0 +1,7 @@
+rules:
+  - id: datetime-now
+    message: DateTime.Now is local time; token lifetimes should be computed in UTC
+    languages: [csharp]
+    severity: WARNING
+    pattern: DateTime.Now
+    fix: DateTime.UtcNow

@@ -1,0 +1,51 @@
+title: Ellipsis in argument lists
+level: 1
+difficulty: 1
+rule_id: execute-with-parameters
+tags: [ellipsis, arguments]
+covers:
+  cheatsheet: [wildcard-arguments, function-call]
+  rule_keys: [pattern]
+wasm: expected
+instructions: |
+  Dapper's `Execute` takes the SQL text first and then whatever the caller needs: an optional
+  parameter object, followed by optional *named* arguments such as `commandType:` or `transaction:`.
+  In this test file the same method is called with one argument on some lines and with three on others.
+
+  We want to find every `Execute` call that passes a **parameter object** — lines 37 and 63, where
+  `args` is handed in right after the SQL string. The starter rule `$C.Execute("...", $P)` looks
+  right, but it matches nothing: arguments in a pattern are matched *by position*, so two arguments
+  in the pattern means exactly two arguments in the code, and both of our calls pass a third one.
+
+  Try adding `...` as a third argument, after `$P`. Inside an argument list the ellipsis stands for
+  *zero or more* further arguments, named ones included.
+hints:
+  - "Count the arguments on lines 37 and 63: after the SQL string and `args` there is a third, named argument `commandType: CommandType.StoredProcedure`. The starter only has room for two."
+  - "`...` between the parentheses matches any number of arguments, including none. Put it where the extra argument appears — at the end."
+  - "The whole pattern is `$C.Execute(\"...\", $P, ...)`."
+followup_title: Correct!
+followup: |
+  `$C.Execute("...", $P, ...)` matches lines 37 and 63 because the argument list is read left to
+  right: `"..."` takes the SQL string, `$P` takes `args`, and the trailing `...` absorbs the named
+  `commandType:` argument. The one-argument calls on lines 21, 45 and 75 do not match — after the
+  string there is nothing left for `$P`, and a metavariable always has to bind *something*. Order
+  matters too: `$C.Execute($P, "...", ...)` finds nothing, because no call has a string literal in
+  second place.
+
+  Since `...` also matches *zero* arguments, a plain two-argument call such as
+  `connection.Execute("...", args)` would be reported as well.
+
+  **Try this:** change the pattern to `$C.Execute("...", ...)` — now all five calls match, because
+  `...` is satisfied by no extra arguments at all. Then try `$C.Execute($...ARGS)` and mention
+  `$...ARGS` in the `message`: an ellipsis *metavariable* binds the whole argument list, however
+  long it is.
+sources:
+  - repo: DapperLib/Dapper
+    path: tests/Dapper.Tests/ProcedureTests.cs
+    commit: 6d48ef664acc7298c649e2d449d903b3360d5a90
+    license: Apache-2.0
+    copyright: "Stack Exchange, Inc."
+    url: https://github.com/DapperLib/Dapper/blob/6d48ef664acc7298c649e2d449d903b3360d5a90/tests/Dapper.Tests/ProcedureTests.cs
+    lines: [4, 82]
+    modified: false
+    modification_note: ""

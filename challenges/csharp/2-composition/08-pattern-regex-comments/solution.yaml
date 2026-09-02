@@ -1,0 +1,8 @@
+rules:
+  - id: ctsec-sqli-marker
+    message: the IssueBlot authors marked this spot as a known SQL injection
+    languages: [csharp]
+    severity: INFO
+    patterns:
+      - pattern-regex: '//\s*CTSECISSUE:\s*\w+'
+      - pattern-not-regex: 'CodeInjection'

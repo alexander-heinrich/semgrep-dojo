@@ -1,0 +1,9 @@
+rules:
+  - id: redirect-of-parameter
+    message: $M redirects to its own parameter $P without validation
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern: Redirect($U)
+      - pattern-inside: |
+          $R $M(...) { ... }

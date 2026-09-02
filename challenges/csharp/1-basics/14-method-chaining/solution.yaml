@@ -1,0 +1,6 @@
+rules:
+  - id: logger-configuration-chain
+    message: a logger is built from a LoggerConfiguration
+    languages: [csharp]
+    severity: INFO
+    pattern: new LoggerConfiguration(). ... .CreateLogger()

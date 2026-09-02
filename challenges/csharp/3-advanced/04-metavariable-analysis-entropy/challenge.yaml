@@ -1,0 +1,46 @@
+title: metavariable-analysis — entropy instead of a regex
+level: 3
+difficulty: 3
+rule_id: high-entropy-constant
+tags: [metavariable-analysis, security, string-literal]
+covers:
+  cheatsheet: [argument]
+  rule_keys: [metavariable-analysis, patterns]
+wasm: cli-only
+instructions: |
+  Same four constants as in the `metavariable-regex` challenge, different tool. A regex for "32+ hex
+  digits" only finds secrets that happen to be hex. Real secrets come in many shapes; what they have in
+  common is that they look *random*.
+
+  `metavariable-analysis` runs a built-in analyzer over a captured value. The `entropy` analyzer
+  reports strings whose character distribution looks random enough to be a key or token; the `redos`
+  analyzer (the other one available) flags regular expressions vulnerable to catastrophic
+  backtracking.
+
+  Add a `metavariable-analysis` entry under `patterns:` so that only the high-entropy `TokenSecret`
+  matches and the three role names do not.
+hints:
+  - "`- metavariable-analysis: {metavariable: $V, analyzer: entropy}`"
+followup_title: Correct!
+followup: |
+  Entropy analysis has no idea what a secret *is* — it just measures how unpredictable the characters
+  are. `"User"` and `"Administrator"` are ordinary English; `"f449a71c…"` is not. This is how
+  Semgrep's generic-secrets rules and many secret scanners work, and it complements name-based and
+  format-based checks rather than replacing them.
+
+  Like the regex operators, `metavariable-analysis` cannot run in the browser engine on this site, so
+  this one is verified with the real CLI.
+
+  **Try this:** add a fifth constant `public const string Greeting = "hello hello hello";` to the
+  target in your local checkout — low entropy, no match. Then paste a real API key or a long
+  base64 blob — the analyzer flags it, no hex required.
+sources:
+  - repo: appsecco/dvcsharp-api
+    path: Models/User.cs
+    commit: 76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc
+    license: MIT
+    copyright: "2022 Appsecco Ltd."
+    url: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Models/User.cs
+    lines: [4, 28]
+    modified: true
+    modification_note: "Members after the constants replaced by `// ... (omitted)`; annotation comments added."

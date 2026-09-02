@@ -1,0 +1,50 @@
+title: 'The string wildcard "..."'
+level: 1
+difficulty: 1
+rule_id: writeline-literal
+tags: [string-literal, ellipsis, constant-propagation]
+covers:
+  cheatsheet: [wildcard-strings, constant-propagation]
+  rule_keys: [pattern]
+wasm: expected
+instructions: |
+  Semgrep patterns are written in the language you scan, so `Console.WriteLine("// GlobalSetup")` is a
+  complete pattern: a call to `Console.WriteLine` whose argument is exactly that string. Run the starter —
+  it reports a single call, on line 29, even though that line spells the string as
+  `"// " + "GlobalSetup"` (more on that once you have solved it).
+
+  This BenchmarkDotNet sample has five `Console.WriteLine` calls. We want to report every call that prints a
+  **hard-coded string**: lines 29, 34 and 39. The two calls on lines 19 and 24 print an interpolated string
+  whose value depends on a counter, so they must not match.
+
+  Try replacing the literal `"// GlobalSetup"` with `"..."` — three dots inside double quotes. It is the
+  wildcard for *any* string literal.
+hints:
+  - "The dots go *inside* the quotes: `\"...\"` means *any string literal*. A bare `...` between the parentheses would mean *any arguments* and would also match the two interpolated calls."
+  - "Only the argument changes; keep `Console.WriteLine(` and `)` exactly as in the starter."
+  - "The finished rule is `pattern: Console.WriteLine(\"...\")`."
+followup_title: That's it!
+followup: |
+  `"..."` stands for *any string literal*, so `Console.WriteLine("...")` matches every call whose argument
+  is a constant string, whatever its content.
+
+  Lines 29, 34 and 39 pass `"// " + "GlobalSetup"` and friends — not one literal in the source text, but
+  Semgrep runs **constant propagation** before matching and folds `"a" + "b"` into `"ab"`. That is why the
+  starter's exact string matched line 29, and why `"..."` matches all three concatenations. Lines 19 and 24
+  stay quiet: `$"// IterationSetup ({++setupCounter})"` is an interpolated string whose value is only known
+  at run time, and the same goes for a variable Semgrep cannot trace to a literal, such as a method
+  parameter in `Console.WriteLine(name)` — `"..."` accepts literals (folded ones included) and nothing else.
+
+  **Try this:** change the pattern to `Console.WriteLine($MSG)` — a metavariable matches *any* expression,
+  so all five calls light up. Then try `Console.WriteLine("// Benchmark")` and watch folding single out
+  line 39.
+sources:
+  - repo: dotnet/BenchmarkDotNet
+    path: samples/BenchmarkDotNet.Samples/IntroSetupCleanupIteration.cs
+    commit: 5995bf68f9ae7864ec12916c7b426b02759d1ad5
+    license: MIT
+    copyright: "2013–2025 .NET Foundation and contributors"
+    url: https://github.com/dotnet/BenchmarkDotNet/blob/5995bf68f9ae7864ec12916c7b426b02759d1ad5/samples/BenchmarkDotNet.Samples/IntroSetupCleanupIteration.cs
+    lines: [4, 41]
+    modified: false
+    modification_note: ""

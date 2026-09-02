@@ -1,0 +1,6 @@
+rules:
+  - id: public-action
+    message: $M is a public action method - an HTTP endpoint of this controller
+    languages: [csharp]
+    severity: INFO
+    pattern: public $RET $M(...) { ... }

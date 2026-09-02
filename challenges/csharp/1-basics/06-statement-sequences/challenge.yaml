@@ -1,0 +1,65 @@
+title: Statements, declarations and the ellipsis between them
+level: 1
+difficulty: 2
+rule_id: sql-connection-opened
+tags: [ellipsis, block-scope, metavariable-equality]
+covers:
+  cheatsheet: [wildcard-statements, reoccurring-variables]
+  rule_keys: [pattern]
+grade: ranges
+instructions: |
+  So far every pattern matched a single expression. A pattern can also be a **sequence of
+  statements**: write them one after another, each ending in `;`, and put `...` between them to
+  allow any number of other statements in between. Reusing `$C` in both statements ties them to
+  the *same* variable.
+
+  The starter looks for `$C = new SqlConnection(...); ... $C.Open();` — and finds nothing in this
+  repository class, although `GetBill` and `GetBillDescription` clearly create a connection and open
+  it a few lines later. The reason: `$C = ...;` is an **assignment** to an existing variable, but the
+  code contains **declarations** (`SqlConnection conn = ...;`), and Semgrep does not treat one as
+  the other.
+
+  Change the first statement of the pattern into a declaration so that both methods are reported.
+  The match must start at the `SqlConnection conn = ...` line (lines 20 and 41) and extend down to
+  the matching `conn.Open();` — this challenge grades the whole match range, not only the first line.
+hints:
+  - "Look at how `conn` is introduced in the code: it is *declared* together with its type, not assigned to a variable that already exists. Your pattern has to say the same."
+  - "A declaration in a pattern looks exactly like one in C#: `SqlConnection $C = new SqlConnection(...);`. (`var $C = ...` works as well — in a pattern, `var` accepts any declared type.)"
+  - "Keep the rest unchanged, so the whole pattern reads `SqlConnection $C = new SqlConnection(...); ... $C.Open();`."
+followup_title: Exactly!
+followup: |
+  `SqlConnection $C = new SqlConnection(...);` is a *local declaration* statement, while
+  `$C = new SqlConnection(...);` is an *assignment* statement. They are different nodes in the syntax
+  tree, so the assignment pattern silently matched nothing — a common surprise when a pattern is
+  copied from a language without declarations. `var $C = ...` works too: in a pattern, `var` stands
+  for any declared type (the reverse is not true — `$T $C = ...` does not match a `var` declaration).
+
+  Each statement in the pattern ends with `;`, and the `...` between them stands for zero or more
+  statements. Because `$C` is reused, `Open()` must be called on the very variable that was
+  declared. The match Semgrep reports spans the whole sequence: from the declaration on line 20 down
+  to `conn.Open();` on line 30 (and 41 to 51 in the second method).
+
+  Two more things are worth knowing. The `...` also *descends* into nested blocks, so the pattern
+  would still match if `conn.Open()` sat inside a `try { }` or an `if` — but it never climbs *out*
+  of a block: a connection declared inside an `if` and opened after it is not a match. And a call
+  statement such as `$C.Open();` matches the call wherever it appears, even inside a bigger statement
+  like `SqlDataReader r = Helper(conn.Open());`.
+
+  **Try this:** append a third statement, `... $C.Close();`. Now nothing matches at all — neither
+  method ever closes its connection, which is exactly the resource leak the original project marks
+  with `CTSECISSUE: UnsafeDatabaseResourceRelease`. Then replace the whole pattern with the single
+  call statement `$X.$M();` and count the matches — five: besides the two `conn.Open();` lines it
+  reaches `sqlComm.ExecuteReader()` inside the `SqlDataReader DR = ...` declarations (lines 31 and
+  52) and `.FirstOrDefault()` at the end of the `return` on line 62, because call statements match
+  deeply. `Parameters.Add(...)` stays out: `$M()` with empty parentheses only matches calls without
+  arguments.
+sources:
+  - repo: CodeThreat/IssueBlot.NET
+    path: src/NETMVCBlot/Repository/BillRepository.cs
+    commit: 06f33f75ec5f3e36594f32e5413d8d4fd64282b0
+    license: MIT
+    copyright: "2023 CodeThreat"
+    url: https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Repository/BillRepository.cs
+    lines: [4, 78]
+    modified: false
+    modification_note: ""

@@ -1,0 +1,47 @@
+title: focus-metavariable — report just the part that matters
+level: 2
+difficulty: 3
+rule_id: deserialize-argument
+tags: [focus-metavariable, metavariable, security]
+covers:
+  cheatsheet: [argument, function-call]
+  rule_keys: [focus-metavariable, patterns]
+grade: ranges
+instructions: |
+  The `Import` action deserializes the raw request body with an `XmlSerializer`. The starter rule
+  finds the call, and this time the *line* is not the problem — the **range** is.
+
+  Look at the result after running the starter: the whole call `serializer.Deserialize(reader)` is
+  highlighted. Security findings are more useful when they point at the untrusted *input*, and taint
+  rules (coming up in Level 3) need to know which sub-expression carries the data.
+
+  `focus-metavariable: $X` inside a `patterns:` block narrows the reported range to whatever `$X`
+  captured, without changing which places match. Add it so the finding covers only `reader`.
+
+  This challenge is graded on exact ranges (start and end column), not just lines.
+hints:
+  - "Add `- focus-metavariable: $R` as a second entry under `patterns:`."
+followup_title: Correct!
+followup: |
+  Same line, smaller range: `focus-metavariable` re-anchors the finding on the binding of `$R`. Two
+  consequences worth knowing:
+
+  * Everything else in the rule still applies — `pattern-not`, `pattern-inside` and friends filter
+    the *original* match; focusing happens last.
+  * In taint rules, `pattern-sources` / `pattern-sinks` entries are themselves `patterns:` blocks, and
+    `focus-metavariable` is how you say "the source is this parameter" or "only this argument of the
+    sink is dangerous".
+
+  **Try this:** focus on `$S` instead — the range moves to `serializer`. Then remove the `patterns:`
+  wrapper and write `pattern: $S.Deserialize($R)` on its own: the match is back to the full call, and
+  you cannot add `focus-metavariable` without `patterns:`.
+sources:
+  - repo: appsecco/dvcsharp-api
+    path: Controllers/ProductsController.cs
+    commit: 76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc
+    license: MIT
+    copyright: "2022 Appsecco Ltd."
+    url: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Controllers/ProductsController.cs
+    lines: [4, 56]
+    modified: true
+    modification_note: "The Get, Post and Search actions replaced by `// ... (omitted)`; annotation comment added."

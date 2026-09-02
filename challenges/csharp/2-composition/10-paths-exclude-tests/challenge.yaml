@@ -1,0 +1,47 @@
+title: paths — which files a rule looks at
+level: 2
+difficulty: 2
+rule_id: dapper-execute-in-tests
+target_path: tests/Dapper.Tests/ProcedureTests.cs
+tags: [paths]
+covers:
+  cheatsheet: [function-call]
+  rule_keys: [paths, pattern]
+wasm: cli-only
+instructions: |
+  Not every finding is worth reporting everywhere. This Dapper file lives at
+  `tests/Dapper.Tests/ProcedureTests.cs`, and stored-procedure calls in a *test suite* are exactly
+  what you would expect. The starter rule reports all three of them.
+
+  A rule can restrict the files it applies to with a top-level `paths:` key holding `include:` and
+  `exclude:` lists of glob patterns, matched against each file's path relative to the scan root.
+
+  Add a `paths:` block that excludes everything under `tests/`, so that this file produces **zero**
+  findings. (The site knows the target's path; every call is marked `○ must not match`.)
+hints:
+  - >-
+    The block is top-level, next to `pattern:` — `paths:` containing `exclude:` with a list of globs.
+  - >-
+    `exclude: ["tests/**"]` — the `**` glob matches any number of directory levels.
+followup_title: Correct!
+followup: |
+  `paths.exclude: ["tests/**"]` removes the file from the rule's scope before any pattern is tried,
+  so nothing is reported. `include:` works the other way round (only listed globs are scanned), and
+  both accept several entries.
+
+  Path filtering is applied per rule, which is why it is a rule key and not a CLI flag; the CLI flags
+  `--include` / `--exclude` do the same for a whole run. The browser engine on this site sees a
+  single file with no directory context and ignores `paths`, so this challenge is CLI-only.
+
+  **Try this:** change it to `include: ["src/**"]` — same effect for this file. Then try
+  `exclude: ["*Tests.cs"]`: a glob without a slash matches the file *name* anywhere in the tree.
+sources:
+  - repo: DapperLib/Dapper
+    path: tests/Dapper.Tests/ProcedureTests.cs
+    commit: 6d48ef664acc7298c649e2d449d903b3360d5a90
+    license: Apache-2.0
+    copyright: "Stack Exchange, Inc."
+    url: https://github.com/DapperLib/Dapper/blob/6d48ef664acc7298c649e2d449d903b3360d5a90/tests/Dapper.Tests/ProcedureTests.cs
+    lines: [4, 91]
+    modified: true
+    modification_note: "Same excerpt as the named-arguments challenge; annotation comments changed to `ok`."

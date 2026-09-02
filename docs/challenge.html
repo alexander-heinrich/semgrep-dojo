@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semgrep Dojo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥋</text></svg>">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body class="challenge-page">
+<header class="top">
+  <div class="brand"><a href="./">🥋 Semgrep Dojo</a></div>
+  <div class="crumbs"><span id="crumb-level"></span><span id="crumb-title"></span></div>
+  <nav class="pager">
+    <a id="prev" href="#">← Prev</a>
+    <span id="engine-status" class="pill" title="browser engine status">engine: idle</span>
+    <a id="next" href="#">Next →</a>
+  </nav>
+</header>
+<main class="workspace">
+  <aside class="pane instructions">
+    <div class="meta"><span id="difficulty" class="dots"></span><span id="tags" class="tags"></span></div>
+    <h1 id="title"></h1>
+    <div id="instructions" class="md"></div>
+    <div id="hints"></div>
+    <div id="cli-box" class="cli hidden"></div>
+    <div id="followup" class="followup hidden"></div>
+    <div id="attribution" class="attribution"></div>
+  </aside>
+  <section class="pane editors">
+    <div class="editor-block rule">
+      <div class="toolbar">
+        <span class="label">rule.yaml</span>
+        <span class="spacer"></span>
+        <button id="run" class="primary" title="Ctrl/Cmd + Enter">▶ Run</button>
+        <button id="reset" title="restore the starter rule">Reset</button>
+        <button id="show-solution" title="replace the editor with the reference solution">Show solution</button>
+      </div>
+      <div id="rule-editor" class="editor"></div>
+      <div id="rule-messages" class="messages"></div>
+    </div>
+    <div class="editor-block target">
+      <div class="toolbar"><span class="label" id="target-name">target.cs</span><span class="spacer"></span>
+        <span class="legend"><span class="dojo-marker expected">▶</span> must match <span class="dojo-marker ok">○</span> must not match <span class="dojo-marker matched">✔</span> matched <span class="dojo-marker unexpected">✖</span> unexpected <span class="dojo-marker missed">▷</span> missed</span></div>
+      <div id="target-editor" class="editor"></div>
+    </div>
+    <div id="results" class="results"></div>
+  </section>
+</main>
+<script type="module" src="js/app-challenge.js"></script>
+</body>
+</html>

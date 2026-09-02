@@ -1,0 +1,8 @@
+rules:
+  - id: redirect-to-variable
+    message: redirect target $U comes from a variable — check it is a local URL
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern: Redirect($U)
+      - pattern-not: Redirect("...")

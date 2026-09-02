@@ -1,0 +1,6 @@
+rules:
+  - id: write-string
+    message: a string is written to the hash stream
+    languages: [csharp]
+    severity: INFO
+    pattern: _writer.Write($X)

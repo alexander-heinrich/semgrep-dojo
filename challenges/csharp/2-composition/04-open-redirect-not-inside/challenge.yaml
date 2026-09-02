@@ -1,0 +1,55 @@
+title: pattern-not-inside — unless it is guarded
+level: 2
+difficulty: 3
+rule_id: open-redirect
+tags: [pattern-not-inside, metavariable-equality, security]
+covers:
+  cheatsheet: [conditionals, nested-statements]
+  rule_keys: [pattern-not-inside, patterns, pattern]
+instructions: |
+  Two redirects to a request-controlled `returnUrl`. The aspnetcore sample is safe: its redirect sits
+  inside `if (Url.IsLocalUrl(returnUrl)) { ... }`. AspGoat's `OpenRedirect` only checks for `null` — a
+  textbook open redirect.
+
+  The starter already excludes literal redirects, so it reports both parameter redirects. We want the
+  guarded one gone. `pattern-not-inside` is the negative twin of `pattern-inside`: it drops matches
+  that lie within the given code, and — like `pattern-inside` — it unifies metavariables with the main
+  pattern.
+
+  Add a `pattern-not-inside` entry for an `if` whose condition is `Url.IsLocalUrl(...)` applied to
+  the *same* value that is being redirected to.
+hints:
+  - "The enclosing code is an `if` statement; write it as a complete statement with a body."
+  - "Reuse `$U`: `if (Url.IsLocalUrl($U)) { $S; ... }` — the guard must test the redirected value, not just any value."
+  - "Body note: current Semgrep accepts `{ ... }`; the browser engine on this site needs `{ $S; ... }` for an if-body after a call condition."
+followup_title: Correct!
+followup: |
+  `pattern-not-inside: if (Url.IsLocalUrl($U)) { $S; ... }` removes the aspnetcore match because that
+  `Redirect(returnUrl)` is nested in an `if` guarding exactly `returnUrl`. AspGoat's `if (returnUrl != null)`
+  is an `if` too, but its condition is not `Url.IsLocalUrl(...)`, so the redirect stays reported.
+
+  Unification matters here: with `if (Url.IsLocalUrl($OTHER))` the exclusion would also fire for a
+  redirect to `b` guarded by a check of `a` — a classic false negative.
+
+  **Try this:** change the guard to `if (Url.IsLocalUrl($U)) { ... } else { ... }` — the aspnetcore
+  redirect has an `else` branch, so it is still excluded; AspGoat's is not. Then remove the
+  `pattern-not` entry and watch `Redirect("/")` come back: every entry under `patterns:` is independent.
+sources:
+  - repo: dotnet/aspnetcore
+    path: src/Security/samples/Cookies/Controllers/AccountController.cs
+    commit: 6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs
+    lines: [4, 76]
+    modified: true
+    modification_note: "File-scoped namespace turned into a block; the GET Login, ValidateLogin and AccessDenied members replaced by `// ... (omitted)`; annotation comments added."
+  - repo: Soham7-dev/AspGoat
+    path: Controllers/HomeController.cs
+    commit: db3153f5dae036a9d67e12be22548299855c6b40
+    license: MIT
+    copyright: "2025 Soham Das"
+    url: https://github.com/Soham7-dev/AspGoat/blob/db3153f5dae036a9d67e12be22548299855c6b40/Controllers/HomeController.cs
+    lines: [6, 76]
+    modified: true
+    modification_note: "Only the class shell and the OpenRedirect action kept; other members replaced by `// ... (omitted)`; annotation comment added."

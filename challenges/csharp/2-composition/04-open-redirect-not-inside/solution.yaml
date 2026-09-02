@@ -1,0 +1,10 @@
+rules:
+  - id: open-redirect
+    message: $U is redirected to without a local-URL check
+    languages: [csharp]
+    severity: ERROR
+    patterns:
+      - pattern: Redirect($U)
+      - pattern-not: Redirect("...")
+      - pattern-not-inside: |
+          if (Url.IsLocalUrl($U)) { $S; ... }

@@ -1,0 +1,19 @@
+rules:
+  - id: untrusted-xml-content
+    message: content derived from request data is used without encoding
+    languages: [csharp]
+    severity: WARNING
+    mode: taint
+    pattern-sources:
+      - pattern: RequestUtils.GetIfDefined(Request, "...")
+    pattern-propagators:
+      - pattern: $DOC.LoadXml($XML)
+        from: $XML
+        to: $DOC
+    pattern-sanitizers:
+      - pattern: _javaScriptEncoder.Encode(...)
+    pattern-sinks:
+      - pattern: Show(...)
+      - patterns:
+          - pattern: foreach ($T $N in $DOC) { ... }
+          - focus-metavariable: $DOC

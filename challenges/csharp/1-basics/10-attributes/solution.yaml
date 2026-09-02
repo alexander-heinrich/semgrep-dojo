@@ -1,0 +1,7 @@
+rules:
+  - id: post-action
+    message: $M handles an HTTP POST
+    languages: [csharp]
+    severity: INFO
+    pattern: |
+      [HttpPost(...)] $R $M(...) { ... }

@@ -1,0 +1,6 @@
+rules:
+  - id: null-or-empty-guard
+    message: "$X is only checked with string.IsNullOrEmpty; consider string.IsNullOrWhiteSpace so that blank input is rejected as well"
+    languages: [csharp]
+    severity: INFO
+    pattern: if (string.IsNullOrEmpty($X)) { $S; ... }

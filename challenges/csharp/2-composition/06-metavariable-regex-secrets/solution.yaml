@@ -1,0 +1,10 @@
+rules:
+  - id: hardcoded-secret
+    message: $N looks like a hard-coded secret
+    languages: [csharp]
+    severity: ERROR
+    patterns:
+      - pattern: public const string $N = $V;
+      - metavariable-regex:
+          metavariable: $V
+          regex: ^"[0-9a-f]{32,}"$

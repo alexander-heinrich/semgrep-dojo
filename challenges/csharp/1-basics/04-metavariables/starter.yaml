@@ -1,0 +1,6 @@
+rules:
+  - id: claim-literal-value
+    message: Claim $TYPE is created with a hard-coded value
+    languages: [csharp]
+    severity: WARNING
+    pattern: new Claim($TYPE, $VALUE)

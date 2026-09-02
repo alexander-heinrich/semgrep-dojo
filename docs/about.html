@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About — Semgrep Dojo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥋</text></svg>">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><a href="./">🥋 Semgrep Dojo</a></div>
+  <nav><a href="./">Challenges</a><a href="https://github.com/alexander-heinrich/learn-semgrep">GitHub</a></nav>
+</header>
+<main class="home">
+  <h1>About</h1>
+  <p>Semgrep Dojo is an unofficial practice site for learning the <a href="https://semgrep.dev/docs/writing-rules/pattern-syntax">Semgrep
+     pattern syntax</a> and <a href="https://semgrep.dev/docs/writing-rules/rule-syntax">rule syntax</a>, modelled on the interactive
+     tutorial at <a href="https://semgrep.dev/learn">semgrep.dev/learn</a>. It is not affiliated with Semgrep, Inc.</p>
+  <p>Every challenge asks for a rule that matches exactly the marked lines of a snippet taken from a real open-source C# project.
+     Grading is the same as <code>semgrep --test</code>: the set of matched start lines must equal the set of
+     <code>// ruleid:</code> lines. Some challenges additionally compare exact ranges (for <code>focus-metavariable</code>) or the
+     rendered fix.</p>
+
+  <h2 id="engine">How rules run in the browser</h2>
+  <p>Your rule runs locally on a WebAssembly build of the Semgrep OSS engine that Semgrep published to npm in April 2023
+     (<code>@semgrep/engine@1.17.1-alpha.2</code> with the C# and Python parsers). Nothing is sent to a server. The snapshot is
+     old, so a few features behave differently from current Semgrep:</p>
+  <ul>
+    <li><code>pattern-regex</code>, <code>pattern-not-regex</code>, <code>metavariable-regex</code>, <code>metavariable-analysis</code> and
+        <code>paths</code> do not work — those challenges are marked <em>CLI only</em> and are practiced with
+        <code>scripts/check.py</code> and your installed Semgrep.</li>
+    <li>Severities <code>CRITICAL/HIGH/MEDIUM/LOW</code> are mapped to <code>ERROR/WARNING/INFO</code> before running.</li>
+    <li>Rendered autofixes are computed by the page from your <code>fix:</code> and the metavariable bindings.</li>
+    <li>The C# parser predates C# 11, so targets avoid raw string literals, list patterns, primary constructors and collection expressions.</li>
+  </ul>
+  <p>All challenges are additionally validated against a current Semgrep CLI when the site is built, and a parity script confirms
+     the browser engine agrees for every challenge that is not CLI-only.</p>
+
+  <h2>Practicing from the terminal</h2>
+  <pre>git clone https://github.com/alexander-heinrich/learn-semgrep && cd learn-semgrep
+python3 scripts/check.py challenges/csharp/1-basics/04-metavariables --start
+$EDITOR workspace/04-metavariables/rule.yaml
+python3 scripts/check.py challenges/csharp/1-basics/04-metavariables workspace/04-metavariables/rule.yaml</pre>
+
+  <h2>Licences and attribution</h2>
+  <p>The site code is MIT-licensed. The Semgrep engine and parsers are LGPL-2.1 and are used as unmodified, separately loaded
+     modules. Every target snippet is attributed to its project, file, commit and licence on the challenge page and in
+     <a href="https://github.com/alexander-heinrich/learn-semgrep/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.
+     Only permissively licensed projects (MIT, Apache-2.0, BSD) are used. If you own code that appears here and want it removed
+     or attributed differently, open an issue.</p>
+</main>
+</body>
+</html>

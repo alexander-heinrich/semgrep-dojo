@@ -1,0 +1,61 @@
+{
+  "annotations": [
+    {
+      "name": "basic ruleid/ok with stacked annotations and foreign ids",
+      "ruleId": "r1",
+      "text": "using X;\n// ruleid: r1\nFoo();\n// ok: r1\nBar();\n// ruleid: other\nBaz();\n// ruleid: r1, other\n// ok: r1\nQux();\n//todoruleid:r1\nLast();\n",
+      "expect": {"ruleid": [3, 10], "ok": [5, 10], "todoruleid": [12], "todook": []}
+    }
+  ],
+  "grades": [
+    {
+      "name": "pass on exact line set (path-prefixed rule id)",
+      "result": {"matches": [{"rule_id": "a.b.r1", "location": {"start": {"line": 3, "col": 1}, "end": {"line": 3, "col": 6}}, "extra": {}}], "errors": []},
+      "expected": {"ruleId": "r1", "grade": "lines", "ruleidLines": [3], "okLines": [5], "todoLines": [], "ranges": null, "fixes": null},
+      "wasm": "expected",
+      "expect": {"status": "pass", "matchedLines": [3], "missed": [], "unexpected": [], "unexpectedOk": [], "otherIds": []}
+    },
+    {
+      "name": "fail with missed + unexpected ok line + other rule ignored",
+      "result": {"matches": [{"rule_id": "r1", "location": {"start": {"line": 5, "col": 1}, "end": {"line": 5, "col": 6}}, "extra": {}}, {"rule_id": "zzz", "location": {"start": {"line": 3, "col": 1}, "end": {"line": 3, "col": 6}}, "extra": {}}], "errors": []},
+      "expected": {"ruleId": "r1", "grade": "lines", "ruleidLines": [3], "okLines": [5], "todoLines": [], "ranges": null, "fixes": null},
+      "wasm": "expected",
+      "expect": {"status": "fail", "matchedLines": [5], "missed": [3], "unexpected": [5], "unexpectedOk": [5], "otherIds": ["zzz"]}
+    },
+    {
+      "name": "todo lines count unless wasm=todo",
+      "result": {"matches": [{"rule_id": "r1", "location": {"start": {"line": 3, "col": 1}, "end": {"line": 3, "col": 6}}, "extra": {}}], "errors": []},
+      "expected": {"ruleId": "r1", "grade": "lines", "ruleidLines": [3], "okLines": [], "todoLines": [12], "ranges": null, "fixes": null},
+      "wasm": "expected",
+      "expect": {"status": "fail", "matchedLines": [3], "missed": [12], "unexpected": [], "unexpectedOk": [], "otherIds": []}
+    },
+    {
+      "name": "todo lines ignored when wasm=todo",
+      "result": {"matches": [{"rule_id": "r1", "location": {"start": {"line": 3, "col": 1}, "end": {"line": 3, "col": 6}}, "extra": {}}], "errors": []},
+      "expected": {"ruleId": "r1", "grade": "lines", "ruleidLines": [3], "okLines": [], "todoLines": [12], "ranges": null, "fixes": null},
+      "wasm": "todo",
+      "expect": {"status": "pass", "matchedLines": [3], "missed": [], "unexpected": [], "unexpectedOk": [], "otherIds": []}
+    },
+    {
+      "name": "ranges mismatch fails after lines pass",
+      "result": {"matches": [{"rule_id": "r1", "location": {"start": {"line": 3, "col": 1}, "end": {"line": 3, "col": 20}}, "extra": {}}], "errors": []},
+      "expected": {"ruleId": "r1", "grade": "ranges", "ruleidLines": [3], "okLines": [], "todoLines": [], "ranges": [[3, 5, 3, 10]], "fixes": null},
+      "wasm": "expected",
+      "expect": {"status": "fail", "matchedLines": [3], "missed": [], "unexpected": [], "unexpectedOk": [], "otherIds": []}
+    },
+    {
+      "name": "fixes compare rendered fix text",
+      "result": {"matches": [{"rule_id": "r1", "location": {"start": {"line": 3, "col": 1}, "end": {"line": 3, "col": 20}}, "extra": {"fix": "DateTime.UtcNow"}}], "errors": []},
+      "expected": {"ruleId": "r1", "grade": "fixes", "ruleidLines": [3], "okLines": [], "todoLines": [], "ranges": null, "fixes": {"3": "DateTime.UtcNow "}},
+      "wasm": "expected",
+      "expect": {"status": "pass", "matchedLines": [3], "missed": [], "unexpected": [], "unexpectedOk": [], "otherIds": []}
+    },
+    {
+      "name": "engine errors short-circuit",
+      "result": {"matches": [], "errors": [{"error_type": "Pattern parse error", "message": "Invalid pattern for C#"}]},
+      "expected": {"ruleId": "r1", "grade": "lines", "ruleidLines": [3], "okLines": [], "todoLines": [], "ranges": null, "fixes": null},
+      "wasm": "expected",
+      "expect": {"status": "error", "matchedLines": [], "missed": [], "unexpected": [], "unexpectedOk": [], "otherIds": []}
+    }
+  ]
+}

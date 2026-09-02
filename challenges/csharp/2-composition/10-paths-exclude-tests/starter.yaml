@@ -1,0 +1,6 @@
+rules:
+  - id: dapper-execute-in-tests
+    message: raw SQL executed through Dapper
+    languages: [csharp]
+    severity: INFO
+    pattern: "$C.$M(..., commandType: CommandType.StoredProcedure, ...)"

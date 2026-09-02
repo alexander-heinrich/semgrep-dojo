@@ -1,0 +1,49 @@
+title: metavariable-pattern — a rule inside a binding
+level: 3
+difficulty: 3
+rule_id: unsafe-type-name-handling
+tags: [metavariable-pattern, pattern-not, security]
+covers:
+  cheatsheet: [argument]
+  rule_keys: [metavariable-pattern, patterns, pattern-not]
+instructions: |
+  Json.NET's `TypeNameHandling` setting decides whether a JSON document may name the .NET type to
+  instantiate. Anything other than `None` has been the root of a long list of deserialization
+  advisories. These two helpers from Json.NET's own test suite set it once to `None` and once to
+  `All` inside object initializers.
+
+  The starter matches both assignments. We want to look *inside* what `$V` captured and keep only
+  values that are **not** `TypeNameHandling.None`. `metavariable-pattern` does exactly that: it runs
+  a nested pattern block — `pattern`, `patterns`, `pattern-either`, `pattern-not`… — on the
+  captured expression, as if it were a tiny file of its own.
+
+  Add a `metavariable-pattern` entry on `$V` whose nested `patterns:` accepts `TypeNameHandling.$MODE`
+  but rejects `TypeNameHandling.None`.
+hints:
+  - "Under `patterns:` add `- metavariable-pattern:` with `metavariable: $V` and a nested `patterns:` list."
+  - "The nested list needs a positive pattern (`TypeNameHandling.$MODE`) and a `pattern-not: TypeNameHandling.None`."
+followup_title: Correct!
+followup: |
+  The outer pattern `TypeNameHandling = $V` matches an assignment wherever it appears — here inside
+  an object initializer. The nested `patterns:` then operate on `$V` alone: `TypeNameHandling.$MODE`
+  makes sure the value is one of the enum members (not, say, a variable), and
+  `pattern-not: TypeNameHandling.None` removes the safe one. `All`, `Objects`, `Arrays` and `Auto`
+  all remain.
+
+  You could write this particular rule with a top-level `pattern-not: TypeNameHandling = TypeNameHandling.None`
+  instead. `metavariable-pattern` pays off when the check is more complex than one negation, when the
+  same binding must satisfy several conditions, or — as in the next challenge — when the captured
+  text must be analysed in another language.
+
+  **Try this:** replace the nested block with `pattern-either:` listing `TypeNameHandling.All` and
+  `TypeNameHandling.Objects` — an allow-list instead of a deny-list, same result on this file.
+sources:
+  - repo: JamesNK/Newtonsoft.Json
+    path: Src/Newtonsoft.Json.Tests/Issues/Issue2735.cs
+    commit: 09bb545d72969ad7fb4ea07db0d5c34f4fc07877
+    license: MIT
+    copyright: "2007 James Newton-King"
+    url: https://github.com/JamesNK/Newtonsoft.Json/blob/09bb545d72969ad7fb4ea07db0d5c34f4fc07877/Src/Newtonsoft.Json.Tests/Issues/Issue2735.cs
+    lines: [4, 36]
+    modified: true
+    modification_note: "License header, the test body and helper classes replaced by `// ... (omitted)`; `#if` directives dropped; annotation comments added."

@@ -1,0 +1,51 @@
+title: metavariable-pattern with another language
+level: 3
+difficulty: 4
+rule_id: razor-template-model-access
+tags: [metavariable-pattern, metavariable-pattern-language, constant-propagation, security]
+covers:
+  cheatsheet: [wildcard-strings, constant-propagation]
+  rule_keys: [metavariable-pattern-language, metavariable-pattern, patterns]
+instructions: |
+  `RunCompile` compiles a Razor template *at runtime*. The template is a C# string — but its
+  *content* is Razor, and we would like to look inside it for `@Model.<something>`.
+
+  `metavariable-pattern` runs a nested pattern on what a metavariable captured. With a `language:`
+  key the nested pattern is matched in a different language — here `generic`, Semgrep's token-based
+  mode for text without a parser. Because it works on the *captured text*, the rule first captures
+  the literal where it is written (`string $T = $LIT;` as a `pattern-inside`) and then inspects
+  `$LIT`; the call itself only refers to the variable `template`.
+
+  The starter looks for `@Html.Raw` inside the template and finds nothing. Change the nested
+  pattern so that a template reading any property of `@Model` is reported.
+hints:
+  - "Only the nested `pattern:` under `metavariable-pattern` needs to change."
+  - "Generic mode matches tokens: `@Model.$PROP` matches `@Model.Name`, `@Model.Email`, …"
+followup_title: Correct!
+followup: |
+  Three things cooperate here. `pattern-inside` binds `$T` to `template` and `$LIT` to the literal
+  `"Hello @Model.Name, welcome to RazorEngine!"`; the main pattern requires the call to use `$T`;
+  and `metavariable-pattern` with `language: generic` runs `@Model.$PROP` over the literal's text
+  as tokens, where `$PROP` matches `Name`.
+
+  Why not simply inspect `$T`? `metavariable-pattern` looks at the captured *source text* —
+  `template`, an identifier — not at the value constant propagation would assign to it. Capturing
+  the literal at its declaration is the reliable way to get the text.
+
+  `language:` accepts any Semgrep language, so a SQL string could be inspected with a `generic`
+  pattern like `SELECT ... FROM $TBL WHERE ... = ...`, and an inline JavaScript string with
+  `language: javascript` — real parsing, not a regex.
+
+  **Try this:** change the nested pattern to `welcome to $ENGINE!` — still a match, generic mode is
+  just tokens. Then drop `language: generic`: the nested pattern is now parsed as C#, where
+  `@Model.$PROP` is the member access `Model.$PROP` (`@` merely escapes the identifier), and a
+  string literal contains no such expression — nothing matches.
+sources:
+  - repo: CodeThreat/IssueBlot.NET
+    path: src/NETMVCBlot/Controllers/CodeInjectionController.cs
+    commit: 06f33f75ec5f3e36594f32e5413d8d4fd64282b0
+    license: MIT
+    copyright: "2023 CodeThreat"
+    url: https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Controllers/CodeInjectionController.cs
+    lines: [4, 27]
+    modified: false

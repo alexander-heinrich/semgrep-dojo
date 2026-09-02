@@ -1,0 +1,12 @@
+rules:
+  - id: unsafe-type-name-handling
+    message: TypeNameHandling other than None lets JSON pick the .NET type to instantiate (CVE-style deserialization gadgets)
+    languages: [csharp]
+    severity: ERROR
+    patterns:
+      - pattern: TypeNameHandling = $V
+      - metavariable-pattern:
+          metavariable: $V
+          patterns:
+            - pattern: TypeNameHandling.$MODE
+            - pattern-not: TypeNameHandling.None

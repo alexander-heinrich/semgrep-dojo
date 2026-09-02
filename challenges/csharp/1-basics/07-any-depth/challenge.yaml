@@ -1,0 +1,61 @@
+title: Patterns match at any depth — no wrapper needed
+level: 1
+difficulty: 1
+rule_id: file-delete
+tags: [any-depth, ellipsis]
+covers:
+  cheatsheet: [nested-statements, function-call]
+  rule_keys: [pattern]
+wasm: expected
+instructions: |
+  Semgrep compares a pattern with **every** piece of code in the file, however deeply it is nested.
+  A pattern for a call such as `File.Delete(...)` is tried against each call inside each method,
+  `try` block, loop, local function and lambda. You never have to describe the code *around* the
+  call to reach it.
+
+  The starter rule tries to "get inside" a method first: `public void $M(...) { ... File.Delete(...); ... }`.
+  Run it and it reports nothing. In this Mouse Without Borders snippet the two deletes live in a
+  local function inside a `private static` method, and one of them is the body of a lambda
+  (`() => File.Delete(path)`). The wrapper did not help Semgrep look deeper; it only added
+  requirements (`public`, `void`, a block body) — and nothing in this snippet is `public`, so the
+  pattern never matches.
+
+  Change the pattern to the bare call `File.Delete(...)`. The rule must report exactly the two
+  deletes on lines 35 and 41 and stay quiet on the `File.Move` calls (lines 61 and 67).
+hints:
+  - "`public void $M(...) { ... }` is not a way *into* a method — it is an extra requirement on the method. Semgrep already searches inside every method, block and lambda on its own."
+  - "Keep only the part of the pattern that describes the call itself. The `...` between the parentheses stands for any arguments."
+  - "`pattern: File.Delete(...)` — one line, no braces."
+followup_title: Exactly!
+followup: |
+  `File.Delete(...)` is an *expression* pattern. Semgrep walks the whole syntax tree and compares
+  the pattern with every expression it meets, so it reaches line 35 (a statement inside `try` → `if`
+  inside a local function inside a private static method) and line 41 (the body of a lambda passed
+  as an argument) without being told the way there. The `File.Move` calls on lines 61 and 67 have the
+  same shape but a different name, so they stay quiet.
+
+  The wrapper failed for a subtler reason than it looks. `public void $M(...) { ... File.Delete(...); ... }`
+  *does* look into nested `try`, `if` and loop blocks — a statement `...` descends into inner blocks —
+  but it also demands a `public void` method with a block body, and it reports the **whole method**
+  as the match rather than the call. And a lambda without a block body, like line 41, can never be
+  found by a pattern that looks for `File.Delete(...);` as a statement.
+
+  Wrapping is the right tool only when the *context* is the point: "a `File.Delete` inside a `catch`
+  block", "only in methods marked `[HttpPost]`". Level 2 introduces `pattern-inside` for exactly that
+  job — it keeps the bare call as the reported match and adds the surrounding code as a separate
+  condition.
+
+  **Try this:** change the pattern to `$RET $M(...) { ... File.Delete(...); ... }`. Two matches
+  appear, but on lines 14 and 27 — the method and local-function headers — and the lambda on
+  line 41 is still missing.
+  Then try `File.$METHOD(...)`: now all four lines match and `$METHOD` is bound to `Delete` or `Move`.
+sources:
+  - repo: microsoft/PowerToys
+    path: src/modules/MouseWithoutBorders/App/Core/Clipboard.cs
+    commit: 911e614e1cfb4ac5bec333fa1073a63bbeec4a99
+    license: MIT
+    copyright: "Microsoft Corporation"
+    url: https://github.com/microsoft/PowerToys/blob/911e614e1cfb4ac5bec333fa1073a63bbeec4a99/src/modules/MouseWithoutBorders/App/Core/Clipboard.cs
+    lines: [4, 85]
+    modified: true
+    modification_note: "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; the `using` lines are the three of the original file's that the snippet needs; the rest of the method body after the four local functions is replaced by `// ... (omitted)`; four annotation comments added."

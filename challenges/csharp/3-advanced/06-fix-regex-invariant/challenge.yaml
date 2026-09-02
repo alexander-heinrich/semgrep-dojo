@@ -1,0 +1,51 @@
+title: fix-regex — and fixes with metavariables
+level: 3
+difficulty: 3
+rule_id: culture-sensitive-lowercase
+tags: [fix-regex, fix, autofix]
+covers:
+  cheatsheet: [method-chaining]
+  rule_keys: [fix-regex, fix, pattern]
+grade: fixes
+instructions: |
+  Umbraco normalises e-mail addresses with `email.ToLower().Trim()`. `ToLower()` uses the
+  *current culture*: on a Turkish system `"I".ToLower()` is `"ı"` (dotless i), so two spellings of
+  the same address may stop comparing equal. For identifiers the right call is
+  `ToLowerInvariant()`.
+
+  The starter has a `fix:` that changes nothing (it re-emits the match). There are two ways to write
+  the real fix:
+
+  * `fix: $S.ToLowerInvariant()` — rebuild the replacement from the pattern's metavariables.
+  * `fix-regex:` — apply a regular-expression substitution to the matched text, with `regex:` and
+    `replacement:` keys. Handy when the match is long and only a small part changes.
+
+  Replace the starter's `fix:` with a `fix-regex:` that rewrites `ToLower()` to `ToLowerInvariant()`.
+  The challenge is graded on the rendered fix text.
+hints:
+  - "`fix-regex:` is a mapping with two keys: `regex:` and `replacement:`."
+  - "`regex: 'ToLower\\(\\)'` — escape the parentheses; `replacement: 'ToLowerInvariant()'`."
+followup_title: Correct!
+followup: |
+  Both matches are rewritten to `email.ToLowerInvariant()`: the regex runs on the matched range only
+  (`email.ToLower()`), never on the whole file, so the `.Trim()` after it is untouched. `fix-regex`
+  also accepts `count:` to limit the number of substitutions, and the replacement may use `\1`-style
+  backreferences.
+
+  `fix: $S.ToLowerInvariant()` would produce the identical result here and is usually easier to read;
+  reach for `fix-regex` when the change is a small edit inside a large match, or when the
+  replacement depends on text that no metavariable captures.
+
+  **Try this:** switch to `fix: $S.ToLowerInvariant()` — same rendered fixes, still correct. Then
+  change the pattern to `$S.ToLower().Trim()` with `fix: $S.ToLowerInvariant().Trim()`: the match
+  grows to include `.Trim()` and the fix has to reproduce it.
+sources:
+  - repo: umbraco/Umbraco-CMS
+    path: src/Umbraco.Core/Services/MemberService.cs
+    commit: 32877ebf09fcc8150e09e616b2cb67cc2e45b64f
+    license: MIT
+    copyright: "2005-present Umbraco"
+    url: https://github.com/umbraco/Umbraco-CMS/blob/32877ebf09fcc8150e09e616b2cb67cc2e45b64f/src/Umbraco.Core/Services/MemberService.cs
+    lines: [4, 52]
+    modified: true
+    modification_note: "Only two CreateMember overloads kept; fields, constructor, XML doc comments and other members replaced by `// ... (omitted)`; annotation comments added."

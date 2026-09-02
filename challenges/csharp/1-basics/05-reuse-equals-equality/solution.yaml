@@ -1,0 +1,6 @@
+rules:
+  - id: self-comparison
+    message: "$X is compared with itself: `$X != $X` is true only when $X is NaN"
+    languages: [csharp]
+    severity: WARNING
+    pattern: $X != $X

@@ -1,0 +1,47 @@
+title: Ellipsis in method chains
+level: 1
+difficulty: 2
+rule_id: logger-configuration-chain
+tags: [method-chain, ellipsis]
+covers:
+  cheatsheet: [method-chaining]
+  rule_keys: [pattern]
+instructions: |
+  Fluent APIs build objects with long dotted chains. Serilog's own tests configure loggers as
+  `new LoggerConfiguration().<anything>.CreateLogger()`, and the "anything" differs every time:
+  one sink, two sinks, a wrapper with a lambda, a minimum-level switch.
+
+  The starter pattern spells out one exact chain, so it only finds the two configurations whose
+  middle is nothing but a single `.WriteTo.Sink(...)` step. Three of the five chains are missed:
+  the one with an extra `.MinimumLevel` step, the one with two sinks, and the wrapper.
+
+  Semgrep has an ellipsis for chains: writing `. ... .` between two members means "any number of
+  property accesses or method calls in between". Change the pattern so that every
+  `new LoggerConfiguration()` … `.CreateLogger()` chain matches, whatever happens in the middle.
+hints:
+  - "Keep the two ends, `new LoggerConfiguration()` and `.CreateLogger()`, and replace everything between them with the chain ellipsis."
+  - "Mind the dots — a dot, a space, three dots, a space, a dot: `new LoggerConfiguration(). ... .CreateLogger()`. Without the spaces, `()....CreateLogger()` parses as a range expression and silently matches nothing."
+followup_title: Correct!
+followup: |
+  `. ... .` skips both property accesses (`.WriteTo`, `.MinimumLevel`) and calls
+  (`.Sink(...)`, `.ControlledBy(...)`, `.DummyWrapper(...)`), so all five chains match — including the
+  one-liner, because line breaks never matter, and the one whose middle step takes a lambda.
+
+  The match starts at `new LoggerConfiguration()` and ends after `.CreateLogger()`; Semgrep reports
+  the whole expression, not just the first line.
+
+  **Try this:** `new LoggerConfiguration(). ... .WriteTo.Sink($S). ... .CreateLogger()` — the
+  wrapper-based configuration drops out (its sink is passed inside a lambda, not as a direct chain
+  step). Then `$C. ... .CreateLogger()` — the receiver becomes anything, which would also match a
+  chain that starts from an existing configuration variable. Here all five still match, but each
+  several times: every way of splitting a chain between `$C` and the ellipsis is its own match.
+sources:
+  - repo: serilog/serilog
+    path: test/Serilog.Tests/Core/LoggerTests.cs
+    commit: 49b5339ce85385dc52d4d8e8f2b8308becf23506
+    license: Apache-2.0
+    copyright: "Serilog Contributors"
+    url: https://github.com/serilog/serilog/blob/49b5339ce85385dc52d4d8e8f2b8308becf23506/test/Serilog.Tests/Core/LoggerTests.cs
+    lines: [4, 85]
+    modified: true
+    modification_note: "File-scoped namespace turned into a block; unrelated tests replaced by `// ... (omitted)`; `#if FEATURE_DEFAULT_INTERFACE` guard around the first test dropped; annotation comments added."

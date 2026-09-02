@@ -1,0 +1,9 @@
+rules:
+  - id: culture-sensitive-lowercase
+    message: ToLower() depends on the current culture (the Turkish-i problem); use ToLowerInvariant() for identifiers such as e-mail addresses
+    languages: [csharp]
+    severity: WARNING
+    pattern: $S.ToLower()
+    fix-regex:
+      regex: 'ToLower\(\)'
+      replacement: 'ToLowerInvariant()'

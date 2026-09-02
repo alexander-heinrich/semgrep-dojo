@@ -1,0 +1,22 @@
+rules:
+  - id: scp-buffer-passthrough
+    message: bytes read from the remote stream are written to $OUT without inspection
+    languages: [csharp]
+    severity: WARNING
+    metadata:
+      cwe: "CWE-20: Improper Input Validation"
+      references:
+        - https://github.com/advisories/GHSA-q939-rpr3-3284
+    min-version: 1.10.0
+    mode: taint
+    options:
+      taint_unify_mvars: true
+    pattern-sources:
+      - patterns:
+          - pattern: $IN.Read($BUF, ...)
+          - focus-metavariable: $BUF
+        by-side-effect: true
+    pattern-sinks:
+      - patterns:
+          - pattern: $OUT.Write($BUF, ...)
+          - focus-metavariable: $BUF

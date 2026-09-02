@@ -1,0 +1,44 @@
+title: Attributes on methods
+level: 1
+difficulty: 2
+rule_id: post-action
+tags: [attributes, partial-statement, ellipsis]
+covers:
+  cheatsheet: [annotations, function-definitions]
+  rule_keys: [pattern]
+instructions: |
+  ASP.NET Core routes requests to controller methods by their **attributes**: `[HttpGet]`,
+  `[HttpPost]`, `[HttpPost("import")]` and so on. In Semgrep, attributes are written in front of the
+  definition pattern, exactly as in C#.
+
+  The starter pattern `[$A] $R $M(...) { ... }` puts a metavariable in the attribute position. Run it
+  and look closely: it matches `[HttpGet]` and `[HttpPost]`, but not `[HttpGet("export")]` — an
+  attribute *with arguments* is a different shape, just like `Foo` and `Foo(1)` are different.
+
+  We want the two POST endpoints, `Post` and `Import`, and nothing else. Write the attribute with
+  an argument-list wildcard so that both `[HttpPost]` and `[HttpPost("import")]` are accepted.
+hints:
+  - "Name the attribute and give it `(...)` as argument list."
+  - "`[HttpPost(...)] $R $M(...) { ... }` — `(...)` also matches an attribute written without any parentheses."
+followup_title: Correct!
+followup: |
+  `[HttpPost(...)]` matches both spellings: Semgrep treats an attribute without parentheses as one
+  with an empty argument list, and `...` accepts zero arguments. `[HttpPost]` on its own would only
+  match the bare form.
+
+  Attributes are matched as a *subset*: a method decorated with `[Authorize] [HttpPost]` still
+  matches a pattern that mentions only `[HttpPost(...)]`. Order does not matter either.
+
+  **Try this:** `[HttpGet(...)] $R $M(...) { ... }` finds the three GET endpoints. Then try
+  `[Route(...)] class $C : Controller { ... }` — attributes on classes work the same way, and this
+  is a handy `pattern-inside` for "only inside controllers" in Level 2.
+sources:
+  - repo: appsecco/dvcsharp-api
+    path: Controllers/ProductsController.cs
+    commit: 76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc
+    license: MIT
+    copyright: "2022 Appsecco Ltd."
+    url: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Controllers/ProductsController.cs
+    lines: [4, 91]
+    modified: true
+    modification_note: "Method bodies shortened with `// ... (omitted)`; annotation comments added."

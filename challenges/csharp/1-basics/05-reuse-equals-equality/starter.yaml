@@ -1,0 +1,6 @@
+rules:
+  - id: self-comparison
+    message: "$A is compared with $B"
+    languages: [csharp]
+    severity: WARNING
+    pattern: $A != $B

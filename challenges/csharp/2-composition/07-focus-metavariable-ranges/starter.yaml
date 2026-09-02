@@ -1,0 +1,7 @@
+rules:
+  - id: deserialize-argument
+    message: untrusted data $R is deserialized
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern: $S.Deserialize($R)

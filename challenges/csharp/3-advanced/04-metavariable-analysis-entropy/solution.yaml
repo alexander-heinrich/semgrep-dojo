@@ -1,0 +1,10 @@
+rules:
+  - id: high-entropy-constant
+    message: $N has a high-entropy value — is it a secret?
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern: public const string $N = $V;
+      - metavariable-analysis:
+          metavariable: $V
+          analyzer: entropy

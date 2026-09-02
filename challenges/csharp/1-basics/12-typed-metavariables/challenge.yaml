@@ -1,0 +1,49 @@
+title: Typed metavariables
+level: 1
+difficulty: 3
+rule_id: write-string
+tags: [typed-metavariable, metavariable]
+covers:
+  cheatsheet: [typed-metavariables]
+  rule_keys: [pattern]
+instructions: |
+  Umbraco's `HashGenerator` feeds values of many types into one `StreamWriter`. Every `Add…` method
+  ends up calling `_writer.Write(...)`, so the starter pattern matches six calls. Suppose we only care
+  about the call that writes a **string**.
+
+  A **typed metavariable** `(string $X)` matches an expression only when Semgrep can tell that its
+  type is `string`. Semgrep learns types from declarations it can see in the same file: parameters,
+  fields, properties, locals and literals. It does *not* infer the return type of a method call such
+  as `s.ToUpperInvariant()` — not even when the method is declared in the same file.
+
+  Change the argument of the pattern to a typed metavariable so that only `_writer.Write(s)` inside
+  `AddString` matches.
+hints:
+  - "The syntax is a parenthesised type and metavariable: `(string $X)`."
+  - "`_writer.Write((string $X))` — two sets of parentheses: the call's and the typed metavariable's."
+followup_title: Correct!
+followup: |
+  `s` is declared as `string s` in the parameter list of `AddString`, so `(string $X)` accepts it. In
+  `AddCaseInsensitiveString`, the argument is `s.ToUpperInvariant()` — a method call, and Semgrep does
+  not infer the return types of calls, so it is *not* matched even though a human knows it is a
+  string. The `i` parameters of `AddInt` and `AddLong` are an `int` and a `long`, `o` is an `object`
+  and `d.Ticks` is a member of a `DateTime` — none of them is a `string`, so they are rejected.
+
+  This is the rule of thumb for typed metavariables: they are precise but conservative. Unknown types
+  never match, so use them to *narrow* a pattern, never to *find* everything of a type.
+
+  **Try this:** change the type to `(long $X)` — `AddLong` matches, but `d.Ticks` does not, although
+  it is a `long` too: Semgrep does not resolve members of `DateTime`. (The Semgrep CLI also reports
+  `AddInt` here, because current releases treat `int` and `long` as compatible integer types; the
+  browser engine is stricter.) Then try `(object $X)` — only `AddObject` matches: `object` is not
+  treated as "anything".
+sources:
+  - repo: umbraco/Umbraco-CMS
+    path: src/Umbraco.Core/HashGenerator.cs
+    commit: 32877ebf09fcc8150e09e616b2cb67cc2e45b64f
+    license: MIT
+    copyright: "2005-present Umbraco"
+    url: https://github.com/umbraco/Umbraco-CMS/blob/32877ebf09fcc8150e09e616b2cb67cc2e45b64f/src/Umbraco.Core/HashGenerator.cs
+    lines: [4, 45]
+    modified: true
+    modification_note: "File-scoped namespace turned into a block; fields, constructor, XML doc comments and later members replaced by `// ... (omitted)`; annotation comments added."

@@ -1,0 +1,6 @@
+rules:
+  - id: execute-with-parameters
+    message: Execute runs a statement with the parameter object $P
+    languages: [csharp]
+    severity: INFO
+    pattern: $C.Execute("...", $P, ...)

@@ -1,0 +1,6 @@
+rules:
+  - id: file-delete
+    message: File.Delete() removes a file on disk — check where the path comes from
+    languages: [csharp]
+    severity: WARNING
+    pattern: File.Delete(...)

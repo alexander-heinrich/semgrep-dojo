@@ -1,0 +1,55 @@
+title: Taint mode — by-side-effect, unification and the rest of the rule file
+level: 3
+difficulty: 5
+rule_id: scp-buffer-passthrough
+tags: [taint, by-side-effect, taint-unify-mvars, options, metadata, min-version]
+covers:
+  cheatsheet: [reoccurring-variables]
+  rule_keys: [by-side-effect, taint-unify-mvars, options, exact, min-version, metadata, severity, pattern-sources, pattern-sinks, mode-taint]
+instructions: |
+  SSH.NET's SCP download loop reads chunks from the channel stream into `buffer` and writes them
+  straight to the output stream. (This excerpt is from the commit just before the fix for
+  [GHSA-q939-rpr3-3284](https://github.com/advisories/GHSA-q939-rpr3-3284); the rule illustrates the
+  general "read from the network, pass on unchecked" shape rather than that specific bug.)
+
+  The starter is a complete, production-style rule: `metadata` with a CWE and a reference,
+  `min-version`, `severity`, and a taint rule whose source focuses on the buffer argument of
+  `Read` and whose sink focuses on the buffer argument of `Write` — the *same* buffer, enforced by
+  `options.taint_unify_mvars`. It finds nothing.
+
+  The reason: `input.Read(buffer, ...)` does not *return* the data, it fills `buffer` **by side
+  effect**. Semgrep only considers a source's *result* tainted unless you say otherwise. Add
+  `by-side-effect: true` to the source so that the focused `$BUF` is tainted after the call.
+hints:
+  - "The key goes on the source entry, next to `patterns:` (same indentation): `by-side-effect: true`."
+  - "Nothing else changes — unification already makes sure `$BUF` is the same variable at the sink."
+followup_title: Correct!
+followup: |
+  With `by-side-effect: true`, the source entry says: after `input.Read(buffer, …)` runs, the
+  variable bound to `$BUF` is tainted, even though the call returned an `int`. From there the flow to
+  `output.Write(buffer, 0, read)` is direct.
+
+  `options.taint_unify_mvars: true` requires metavariables that appear in both the source and the
+  sink to bind to the same thing — here `$BUF` — so a write of some *other* buffer would not be
+  reported. Without it, source and sink metavariables are independent.
+
+  The other keys are documentation and control, not matching: `metadata` travels with every finding
+  (CWE, references, categories), `min-version` makes older CLIs skip a rule that uses newer syntax,
+  and `severity` sets the finding level. Sinks also accept `exact: true` when the *whole* expression
+  must be tainted rather than any part of it — the default is `exact: false` for sinks written as
+  bare patterns, which is why `$OUT.Write($BUF, ...)` fires when only `$BUF` is tainted.
+
+  **Try this:** remove `options:` — still one finding here, because there is only one buffer. Then
+  drop `focus-metavariable` from the sink and remove `by-side-effect` again: the finding comes back,
+  because now the *whole* `output.Write(buffer, 0, read)` call is the sink and `read` — the result of
+  the source call — is tainted. Focusing the sink is what made the side effect matter.
+sources:
+  - repo: sshnet/SSH.NET
+    path: src/Renci.SshNet/ScpClient.cs
+    commit: c66b9f8fb06c12e71761e58a577b1e796026310f
+    license: MIT
+    copyright: "Renci, Oleg Kapeljushnik, Gert Driesen and contributors"
+    url: https://github.com/sshnet/SSH.NET/blob/c66b9f8fb06c12e71761e58a577b1e796026310f/src/Renci.SshNet/ScpClient.cs
+    lines: [4, 45]
+    modified: true
+    modification_note: "Only the InternalDownload(IChannel, Stream, Stream, string, long) method kept; the class declaration shortened to `public partial class ScpClient` (base class dropped) and everything else replaced by `// ... (omitted)`; annotation comment added."

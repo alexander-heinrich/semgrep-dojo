@@ -1,0 +1,60 @@
+title: pattern-regex sees raw text — even comments
+level: 2
+difficulty: 2
+rule_id: ctsec-sqli-marker
+tags: [pattern-regex, pattern-not-regex]
+covers:
+  cheatsheet: [single-statements]
+  rule_keys: [pattern-regex, pattern-not-regex, patterns]
+wasm: cli-only
+instructions: |
+  Every pattern so far worked on the *syntax tree*, which is why comments, whitespace and line
+  breaks never mattered. `pattern-regex` is different: it runs a regular expression over the raw
+  text of the file. That makes it the only way to match things the parser throws away — such as
+  the `// CTSECISSUE:` markers the IssueBlot authors left above each intentional bug.
+
+  The starter matches every marker, six in all. We only want the five SQL-injection markers; the
+  `MVCViewCodeInjection` one at the bottom must not match.
+
+  Inside a `patterns:` block, `pattern-not-regex` removes matches whose text overlaps a match of
+  its own regex. Add one that drops the code-injection marker.
+hints:
+  - "Add a second entry under `patterns:`: `- pattern-not-regex: '...'`."
+  - "`pattern-not-regex: 'CodeInjection'` — the regex only needs to overlap the match it should remove."
+followup_title: Correct!
+followup: |
+  `pattern-regex` reported the six comment lines because regular expressions see the source as
+  text; `pattern-not-regex: 'CodeInjection'` then removed the one match whose text overlaps a
+  `CodeInjection` match. The regex flavour is PCRE, so anchors, character classes and groups work as
+  usual — but a regex knows nothing about C#, so `\w+` happily runs into the next token.
+
+  Regex operators combine with syntax patterns: a common idiom is `pattern: Foo("...")` plus
+  `pattern-regex: 'password'` under `patterns:` to require a substring in the matched text. And
+  since regexes see *everything*, a sloppy one would even match this site's own `// ruleid:`
+  annotations — which is why the marker regex is anchored on `CTSECISSUE`.
+
+  The regex operators cannot run in the browser engine on this site (it has no regex library), so
+  this challenge is checked with the real Semgrep CLI.
+
+  **Try this:** replace the solution with a single `pattern-regex: 'CTSECISSUE:\s*SQL\w*'` — same
+  five matches, no `pattern-not-regex` needed. Then try `pattern-regex: 'input'` and count how many
+  *identifiers* a text search hits that a syntax pattern for the parameter would not.
+sources:
+  - repo: CodeThreat/IssueBlot.NET
+    path: src/NETMVCBlot/Controllers/SQLInjController.cs
+    commit: 06f33f75ec5f3e36594f32e5413d8d4fd64282b0
+    license: MIT
+    copyright: "2023 CodeThreat"
+    url: https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Controllers/SQLInjController.cs
+    lines: [6, 57]
+    modified: true
+    modification_note: "Using directives and helper classes replaced by `// ... (omitted)`; annotation comments added."
+  - repo: CodeThreat/IssueBlot.NET
+    path: src/NETMVCBlot/Controllers/CodeInjectionController.cs
+    commit: 06f33f75ec5f3e36594f32e5413d8d4fd64282b0
+    license: MIT
+    copyright: "2023 CodeThreat"
+    url: https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Controllers/CodeInjectionController.cs
+    lines: [6, 57]
+    modified: true
+    modification_note: "Class moved into the same namespace block as SQLInjController; using directives replaced by `// ... (omitted)`; annotation comments added."

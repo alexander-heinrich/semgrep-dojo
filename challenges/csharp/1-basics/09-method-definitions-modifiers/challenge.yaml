@@ -1,0 +1,45 @@
+title: Method definitions and modifiers
+level: 1
+difficulty: 2
+rule_id: public-action
+tags: [modifiers, partial-statement, ellipsis]
+covers:
+  cheatsheet: [function-definitions]
+  rule_keys: [pattern]
+instructions: |
+  A method definition is a pattern too. `$RET $M(...) { ... }` reads as: any return type, any
+  method name, any parameter list, any body — so it matches **every** method in this ASP.NET Core
+  Identity sample controller, including the private helpers at the bottom.
+
+  Modifiers work as a *required subset*: whatever modifiers you write in the pattern must be present on
+  the method, and any modifiers you leave out are allowed to be there or not. `static` in a pattern
+  excludes instance methods; leaving `static` out matches both.
+
+  We want only the controller's HTTP endpoints — the `public` methods (four of them, one of which is
+  `async`). Change the pattern so that the three `private` helpers no longer match.
+hints:
+  - "Put a modifier in front of `$RET`."
+  - "`public $RET $M(...) { ... }` — `async` and the attributes do not need to be mentioned; they are simply allowed."
+followup_title: Correct!
+followup: |
+  `public $RET $M(...) { ... }` requires `public` and nothing else: `async` is an extra modifier the
+  pattern does not mention, so `public async Task<IActionResult> LogOff()` still matches, and the
+  attributes above each action are ignored unless you write them into the pattern (that is the next
+  challenge).
+
+  The three `private` helpers fail the required-subset test and drop out.
+
+  **Try this:** use `public async $RET $M(...) { ... }` — only `LogOff` remains. Then try
+  `$RET $M(string $P) { ... }`: the parameter list is now *exact* (one string parameter), so
+  `Login(string returnUrl = null)`, `ResetPassword(string code = null)` and `RedirectToLocal(string returnUrl)`
+  match, regardless of their modifiers.
+sources:
+  - repo: dotnet/aspnetcore
+    path: src/Identity/samples/IdentitySample.Mvc/Controllers/AccountController.cs
+    commit: 70f2905ceb6b28f398e80eb9c5f746c1d888dfe4
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/aspnetcore/blob/70f2905ceb6b28f398e80eb9c5f746c1d888dfe4/src/Identity/samples/IdentitySample.Mvc/Controllers/AccountController.cs
+    lines: [4, 91]
+    modified: true
+    modification_note: "File-scoped namespace turned into a block; unrelated members and the `#region`/`#endregion` directives replaced by `// ... (omitted)`; annotation comments added."

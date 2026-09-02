@@ -1,0 +1,51 @@
+title: options — constant propagation on and off
+level: 2
+difficulty: 3
+rule_id: hardcoded-issuer
+tags: [options, constant-propagation, string-literal]
+covers:
+  cheatsheet: [constant-propagation]
+  rule_keys: [options, pattern]
+instructions: |
+  This JWT is created with `issuer: issuer` — a local variable, not a literal. Yet the local was
+  assigned the literal `"http://localhost.local/"` two lines earlier. Whether the pattern
+  `new $T(..., issuer: "...", ...)` (a named argument with a string-literal value) matches depends on
+  **constant propagation**.
+
+  By default Semgrep tracks constants: a local assigned a literal, a `const` field, or a
+  concatenation of literals is treated as if the literal were written in place. The starter turns
+  that off with `options: {constant_propagation: false}` and therefore finds nothing.
+
+  Rule-level `options:` toggle engine behaviours for one rule. Change the option so that the token
+  construction is reported.
+hints:
+  - "Look at the `options:` block; the value of `constant_propagation` is the only thing to change. (The pattern stays quoted: it contains `issuer:` which YAML would otherwise read as a key.)"
+  - "`constant_propagation: true` (or simply delete the `options:` block — true is the default)."
+followup_title: Correct!
+followup: |
+  With propagation on, Semgrep follows `issuer` back to `"http://localhost.local/"` and lets `"..."`
+  match, exactly as if the literal were inline. The named-argument syntax `issuer: "..."` matches the
+  argument by *name*, so its position among the other arguments does not matter.
+
+  Constant propagation reaches further than locals: the current Semgrep CLI also folds `const`
+  fields — `Encoding.UTF8.GetBytes(secret)` with `secret = TokenSecret` matches
+  `$ENC.GetBytes("...")` there. The 2023 browser engine on this site only follows locals and
+  literal concatenation, so this challenge sticks to the `issuer` local.
+
+  `options:` holds a handful of such switches. Two others you will meet in Level 3:
+  `symmetric_eq` (treat `a == b` and `b == a` alike) and `taint_unify_mvars` (require the same
+  metavariable binding at a taint source and sink).
+
+  **Try this:** set `constant_propagation: false` again and change the pattern to
+  `new $T(..., issuer: issuer, ...)` — an exact name works regardless of propagation, but it is
+  fragile. Then try `new $T(..., audience: "...", ...)` with propagation on.
+sources:
+  - repo: appsecco/dvcsharp-api
+    path: Models/User.cs
+    commit: 76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc
+    license: MIT
+    copyright: "2022 Appsecco Ltd."
+    url: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Models/User.cs
+    lines: [4, 66]
+    modified: true
+    modification_note: "Properties and the authorization method replaced by `// ... (omitted)`; annotation comments added."

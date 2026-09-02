@@ -1,0 +1,52 @@
+title: The deep expression operator <... e ...>
+level: 1
+difficulty: 3
+rule_id: sql-concat-input
+tags: [deep-expression, metavariable, security]
+covers:
+  cheatsheet: [deep-expression-operator, argument]
+  rule_keys: [pattern]
+instructions: |
+  This intentionally vulnerable MVC controller (IssueBlot.NET) takes a request parameter `input`
+  and glues it into four SQL strings before handing them to an Entity Framework context — and into
+  a fifth one for a SharePoint `FullTextSqlQuery`.
+
+  The starter rule `$CTX.$M(input)` says: *some method on some object is called with `input` as the
+  argument*. That matches nothing here, because the argument is never `input` itself — it is
+  `"select * from students " + input`, a bigger expression that merely **contains** `input`.
+
+  The **deep expression operator** `<... e ...>` means "an expression that contains `e` anywhere
+  inside it". Change the argument of the starter pattern so that all four query calls match, and
+  nothing else does. One of the four calls has *three* arguments — remember what `...` does in an
+  argument list.
+hints:
+  - "Wrap `input` in the deep expression operator: `<... input ...>`."
+  - "`$CTX.$M(<... input ...>)` matches three of the four calls — the fourth has two more arguments after the SQL string."
+  - "Surround the deep expression with argument ellipses: `$CTX.$M(..., <... input ...>, ...)`."
+followup_title: Correct!
+followup: |
+  `<... input ...>` matches any expression with `input` somewhere inside — `"..." + input` here, but it
+  would equally match `Sanitize(input)`, `input.Trim()` or `a + (b + input)`. That is exactly what you
+  want when you are hunting for user input that *flows into* an API, whatever is done to it on the way.
+  The `...` on either side of the deep expression let the tainted argument sit at any position in a
+  call of any arity — without them, `$M(<... input ...>)` only matched the three single-argument calls.
+
+  The generic calls `CreateQuery<Student>(...)` and `ExecuteStoreQuery<Student>(...)` still match
+  `$M(...)`: type arguments do not get in the way of a method-name metavariable.
+
+  The `QueryText = "..." + input` line in the object initializer is not reported — it is an
+  assignment, not a call, so `$CTX.$M(...)` cannot match it.
+
+  **Try this:** replace the pattern with `$CTX.$M(..., <... "..." + input ...>, ...)` — still four matches.
+  Then try `<... input ...>` on its own as the whole pattern: Semgrep reports *every* expression that
+  contains `input` — the whole call, the `"..." + input` concatenation inside it and the bare `input`
+  itself — so you get 19 overlapping matches, now including the `QueryText` line.
+sources:
+  - repo: CodeThreat/IssueBlot.NET
+    path: src/NETMVCBlot/Controllers/SQLInjController.cs
+    commit: 06f33f75ec5f3e36594f32e5413d8d4fd64282b0
+    license: MIT
+    copyright: "2023 CodeThreat"
+    url: https://github.com/CodeThreat/IssueBlot.NET/blob/06f33f75ec5f3e36594f32e5413d8d4fd64282b0/src/NETMVCBlot/Controllers/SQLInjController.cs
+    lines: [4, 60]
+    modified: false

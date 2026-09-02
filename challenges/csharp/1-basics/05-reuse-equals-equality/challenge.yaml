@@ -1,0 +1,72 @@
+title: Reusing a metavariable means equality
+level: 1
+difficulty: 2
+rule_id: self-comparison
+tags: [metavariable-equality, metavariable]
+covers:
+  cheatsheet: [reoccurring-expressions, reoccurring-statement]
+  rule_keys: [pattern]
+wasm: expected
+instructions: |
+  In the previous step every metavariable had its own name. What happens when the **same**
+  metavariable appears twice in one pattern? Semgrep then requires both occurrences to bind to
+  the same expression: reusing a name means *equality*.
+
+  The target is a slice of `System.Double` from the .NET runtime. `IsNaN` uses a classic trick,
+  `return d != d;` — NaN is the only value that is not equal to itself. The starter pattern
+  `$A != $B` reports every inequality in the file: the bit test in `IsFinite` (line 21),
+  the `x != y` in `MaxNumber` (line 60) and the NaN trick in `IsNaN` (line 43).
+
+  We only want the self-comparison. Change the pattern so that both sides of `!=` use the
+  same metavariable — afterwards only `d != d` on line 43 should be reported.
+hints:
+  - "A metavariable name may appear more than once in a pattern. Two *different* names can bind two different expressions; one name can bind only one."
+  - "Keep the `!=` operator. Replace `$A` and `$B` with a single name, for example `$X`, on both sides."
+  - "The solution is `$X != $X`."
+followup_title: Exactly!
+followup: |
+  `$X != $X` matches `d != d` because the first `$X` binds to `d` and the second occurrence
+  has to be the *same* expression — which it is. In `(~bits & PositiveInfinityBits) != 0`
+  the first `$X` binds to `(~bits & PositiveInfinityBits)`, but the right side is `0`, so the
+  candidate is rejected; `x != y` fails for the same reason.
+
+  This is the general rule: within one pattern, a metavariable is bound on its first occurrence
+  and every further occurrence must be equal to that binding. It works for any expression, not
+  just simple identifiers.
+
+  Equality by reuse works for whole statements too: `if ($C) { $S; } else { $S; }` finds an `if`
+  whose branches are the same statement — a classic copy-paste bug — because `$S` must bind to
+  the same code twice. Nothing in this file has duplicated branches, so it matches nothing here.
+
+  **Try this:** change the operator to `==` — `$X == $X` — and run again. Now `value == value`
+  in `IsRealNumber` (line 82) is reported, while `bits == PositiveInfinityBits` in `IsInfinity`
+  (line 30) still is not. The grader will complain — line 43 is no longer matched and line 82
+  is not an expected line — but that is fine: you are exploring.
+sources:
+  - repo: dotnet/runtime
+    path: src/libraries/System.Private.CoreLib/src/System/Double.cs
+    commit: 7b8b0c6661375d5eb2dad119ee017041f642ded8
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/runtime/blob/7b8b0c6661375d5eb2dad119ee017041f642ded8/src/libraries/System.Private.CoreLib/src/System/Double.cs
+    lines: [4, 86]
+    modified: true
+    modification_note: "Two `using` lines and the `namespace`/`struct` opening kept from lines 9-33 with the struct's attributes and interface list dropped; other members replaced by `// ... (omitted)`; the IsFinite..IsNaN window (lines 169-199) is verbatim apart from two annotation comments."
+  - repo: dotnet/runtime
+    path: src/libraries/System.Private.CoreLib/src/System/Double.cs
+    commit: 7b8b0c6661375d5eb2dad119ee017041f642ded8
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/runtime/blob/7b8b0c6661375d5eb2dad119ee017041f642ded8/src/libraries/System.Private.CoreLib/src/System/Double.cs
+    lines: [4, 86]
+    modified: false
+    modification_note: "MaxNumber (lines 989-1010) verbatim; one annotation comment added."
+  - repo: dotnet/runtime
+    path: src/libraries/System.Private.CoreLib/src/System/Double.cs
+    commit: 7b8b0c6661375d5eb2dad119ee017041f642ded8
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/runtime/blob/7b8b0c6661375d5eb2dad119ee017041f642ded8/src/libraries/System.Private.CoreLib/src/System/Double.cs
+    lines: [4, 86]
+    modified: false
+    modification_note: "IsRealNumber (lines 1141-1150) verbatim."

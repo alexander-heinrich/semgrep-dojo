@@ -1,0 +1,12 @@
+rules:
+  - id: sqlite-injection
+    message: request data reaches a SQLite query
+    languages: [csharp]
+    severity: ERROR
+    mode: taint
+    pattern-sources:
+      - pattern: RequestUtils.GetIfDefined(Request, "...")
+    pattern-sinks:
+      - patterns:
+          - pattern: new SQLiteCommand($Q, ...)
+          - focus-metavariable: $Q

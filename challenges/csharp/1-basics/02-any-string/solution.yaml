@@ -1,0 +1,6 @@
+rules:
+  - id: writeline-literal
+    message: Console.WriteLine prints a hard-coded string
+    languages: [csharp]
+    severity: INFO
+    pattern: Console.WriteLine("...")

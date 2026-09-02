@@ -1,0 +1,6 @@
+rules:
+  - id: sql-concat-input
+    message: request parameter `input` reaches a query API of $CTX
+    languages: [csharp]
+    severity: ERROR
+    pattern: $CTX.$M(input)

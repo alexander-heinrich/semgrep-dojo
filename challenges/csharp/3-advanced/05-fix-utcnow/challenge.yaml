@@ -1,0 +1,43 @@
+title: fix — a rule that repairs what it finds
+level: 3
+difficulty: 2
+rule_id: datetime-now
+tags: [fix, autofix]
+covers:
+  cheatsheet: [single-statements]
+  rule_keys: [fix, pattern]
+grade: fixes
+instructions: |
+  The JWT issued by this method expires at `DateTime.Now.AddMinutes(30)`. `DateTime.Now` is the
+  server's *local* time; token validators compare against UTC, so a token minted on a machine in a
+  UTC+2 zone is "valid" for two extra hours. The safe spelling is `DateTime.UtcNow`.
+
+  The starter rule already finds the line. This challenge is graded on the **fix**: add a `fix:` key
+  to the rule so that `semgrep --autofix` would rewrite the match to `DateTime.UtcNow`.
+
+  A `fix:` is plain replacement text for the matched range. It may mention metavariables from the
+  pattern (`$X`), which are substituted with what they captured.
+hints:
+  - "Add a top-level key next to `pattern:`: `fix: DateTime.UtcNow`."
+followup_title: Correct!
+followup: |
+  Semgrep replaces exactly the matched range — `DateTime.Now`, not the whole line — with the fix text,
+  so `.AddMinutes(30)` survives. On the command line, `semgrep --config rule.yaml --autofix` applies
+  it; without `--autofix` the suggested fix is shown alongside the finding. In the browser results
+  panel you can see the rendered fix under each match.
+
+  Fixes really shine with metavariables: a pattern `DateTime.Now.AddMinutes($N)` with
+  `fix: DateTime.UtcNow.AddMinutes($N)` keeps whatever number was there.
+
+  **Try this:** change the pattern to `$D.Now` with `fix: $D.UtcNow` — same match, and the fix is
+  now generic over the receiver.
+sources:
+  - repo: appsecco/dvcsharp-api
+    path: Models/User.cs
+    commit: 76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc
+    license: MIT
+    copyright: "2022 Appsecco Ltd."
+    url: https://github.com/appsecco/dvcsharp-api/blob/76c1de3c9d8d9c2e8ec0b50abe3b198a4330d7fc/Models/User.cs
+    lines: [4, 53]
+    modified: true
+    modification_note: "Constants, properties and later members replaced by `// ... (omitted)`; annotation comment added."

@@ -1,0 +1,53 @@
+title: Taint mode — sources and sinks
+level: 3
+difficulty: 4
+rule_id: sqlite-injection
+tags: [taint, security, focus-metavariable]
+covers:
+  cheatsheet: [function-call, wildcard-strings]
+  rule_keys: [mode-taint, pattern-sources, pattern-sinks, focus-metavariable]
+instructions: |
+  Two SQLite queries in this deliberately vulnerable controller. The one in `SQLInjection`
+  interpolates two request parameters into the SQL; the one in `SecurityMisconfiguration` is a
+  constant. A *search* rule for `new SQLiteCommand($Q, ...)` — the starter — cannot tell them
+  apart, because it only looks at the shape of the call.
+
+  **Taint mode** looks at *data flow* instead. A rule with `mode: taint` lists `pattern-sources`
+  (where untrusted data enters — here `RequestUtils.GetIfDefined(Request, "...")`) and
+  `pattern-sinks` (where it must not arrive). Semgrep then reports a sink only if some source
+  flows into it, through assignments, string interpolation, concatenation and method arguments.
+
+  Rewrite the starter as a taint rule: the request helper is the source, and the query argument of
+  `new SQLiteCommand(...)` is the sink. Use `focus-metavariable` in the sink so that only the SQL
+  argument counts.
+hints:
+  - "Add `mode: taint`, then replace `pattern:` with `pattern-sources:` and `pattern-sinks:` lists."
+  - "Source: `- pattern: RequestUtils.GetIfDefined(Request, \"...\")`."
+  - "Sink: `- patterns:` with `- pattern: new SQLiteCommand($Q, ...)` and `- focus-metavariable: $Q`."
+followup_title: Correct!
+followup: |
+  `name` and `pw` are tainted at the source; the interpolated string that embeds them is tainted
+  too, and it is passed as `$Q` — a sink. The constant query never touches a source, so it is not
+  reported even though it is the same API. That is the whole idea of taint analysis: same sink,
+  different verdict, depending on where the data came from.
+
+  Each entry under `pattern-sources` / `pattern-sinks` is a full pattern block, so `patterns:` with
+  `focus-metavariable` is how you say "the *argument* is the sink, not the whole call". Semgrep's
+  taint tracking is intraprocedural in the OSS engine: it follows data within one method (and
+  through obvious helpers in the same file), not across arbitrary calls.
+
+  **Try this:** add `- pattern: $DB.ExecuteReader()` as a second sink — a second finding appears on
+  `using (var reader = command.ExecuteReader())` in `SQLInjection`, because `command` was built from
+  tainted data, while the `ExecuteReader()` in `SecurityMisconfiguration` stays clean for the same
+  reason. Then remove `focus-metavariable`: the first finding grows to cover the whole
+  `new SQLiteCommand(...)`.
+sources:
+  - repo: HooliCorp/vulnerable_net_core
+    path: vulnerable_asp_net_core/Controllers/SL.cs
+    commit: a20ecb5fcac9edaf1732729dc2bc3b2e81894552
+    license: Apache-2.0
+    copyright: "HooliCorp"
+    url: https://github.com/HooliCorp/vulnerable_net_core/blob/a20ecb5fcac9edaf1732729dc2bc3b2e81894552/vulnerable_asp_net_core/Controllers/SL.cs
+    lines: [4, 86]
+    modified: true
+    modification_note: "Unrelated actions and fields replaced by `// ... (omitted)`; annotation comments added."
