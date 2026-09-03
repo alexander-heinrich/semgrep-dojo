@@ -42,6 +42,9 @@ on your `PATH`.
 | `scripts/build.py` | validates every challenge with the local Semgrep CLI and writes `docs/data/challenges.json` + the attribution block of `THIRD_PARTY_NOTICES.md` |
 | `scripts/check.py` | terminal practice (above) |
 | `scripts/wasm_parity.mjs` | runs every solution through the browser engine (Node build) and compares with the CLI result |
+| `scripts/semantics_check.mjs` | 67 pattern-semantics checks with stored expectations, run against the browser engine |
+| `scripts/engine_probes.py` | 60 differential probes comparing the browser engine, Semgrep and Opengrep on the same rules |
+| `scripts/network_check.mjs` | records every request a rule run makes and fails if any leaves the local origin |
 | `scripts/browser-test.mjs` | end-to-end check in headless Chrome over the DevTools protocol |
 | `scripts/fetch_snippet.py` | fetches a file from GitHub at a pinned commit and prints attribution blocks for authoring |
 | `scripts/rebuild-engine/` | Dockerfile + scripts that rebuild the browser engine from the Semgrep source tree (see below) |
@@ -56,6 +59,8 @@ npm install                      # only for scripts/vendor.mjs and wasm_parity (
 python3 scripts/build.py         # validate all challenges, emit docs/data/challenges.json
 node scripts/wasm_parity.mjs     # browser-engine parity for every challenge
 node scripts/semantics_check.mjs # 67 pattern-semantics checks against the browser engine
+python3 scripts/engine_probes.py # 60 probes: browser engine vs semgrep vs opengrep
+node scripts/network_check.mjs   # confirms a rule run makes no external requests
 node scripts/browser-test.mjs --all   # headless Chrome end-to-end (needs Google Chrome installed)
 sh scripts/serve.sh              # http://127.0.0.1:8000/
 ```
