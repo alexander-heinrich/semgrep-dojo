@@ -91,4 +91,10 @@ the same challenges also pass unchanged on Opengrep 1.29.0.
 
 ## License
 
-Site code and prose: MIT. Third-party components: see `THIRD_PARTY_NOTICES.md`.
+Site code and prose: MIT. The vendored Semgrep engine and parsers are LGPL-2.1, used unmodified and
+loaded as separate modules; `THIRD_PARTY_NOTICES.md` records the obligations and how they are met, and
+`scripts/rebuild-engine/` is the corresponding build recipe. Challenge target code keeps its upstream
+licence and attribution.
+
+Not affiliated with, sponsored by, or endorsed by Semgrep, Inc. "Semgrep" is a trademark of Semgrep, Inc.
+and is used here only to refer to their software.

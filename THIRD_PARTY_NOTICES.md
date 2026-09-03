@@ -16,12 +16,20 @@ tooling (js_of_ocaml 5.7.2, emscripten 3.1.51):
 | `csharp-1.81.0.mjs`, `csharp-1.81.0.cjs`, `csharp-1.81.0.wasm` | `js/languages/csharp` (`dist/index.*`, `dist/semgrep-parser.wasm`) |
 | `python-1.81.0.mjs`, `python-1.81.0.cjs`, `python-1.81.0.wasm` | `js/languages/python` |
 
-Copyright (c) Semgrep, Inc. — licensed under the GNU Lesser General Public License v2.1
-(https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html). The files are used as separately loaded
-modules (`docs/js/semgrep-worker.js` imports them with dynamic `import()`); no Semgrep source was
-modified. Corresponding source: the tag above plus the build recipe in `scripts/rebuild-engine/`
-(Dockerfile, `build.sh`, `install.sh`), which reproduces the files byte-for-byte modulo toolchain
-nondeterminism. Checksums: `docs/vendor/semgrep/SHA256SUMS`.
+Copyright (c) Semgrep, Inc. — licensed under the GNU Lesser General Public License v2.1. The complete
+licence text is in `docs/vendor/semgrep/LICENSE`, as published with the source at that tag.
+
+How this distribution meets the licence: no Semgrep source was modified; the files are used as
+separately loaded modules (`docs/js/semgrep-worker.js` imports them with dynamic `import()`), so the
+site's own MIT-licensed code is a work that uses the library rather than a derivative of it; the
+corresponding source is the tag named above together with the complete build recipe in
+`scripts/rebuild-engine/` (Dockerfile, `build.sh`, `install.sh`), which lets anyone rebuild or replace
+the library with a modified version; and `docs/vendor/semgrep/SHA256SUMS` identifies exactly what is
+shipped. `docs/vendor/semgrep/VERSIONS.md` and `scripts/rebuild-engine/README.md` record the provenance
+and the build environment.
+
+This project is not affiliated with, sponsored by, or endorsed by Semgrep, Inc. "Semgrep" is a trademark
+of Semgrep, Inc. and is used here only to refer to their software.
 
 Embedded in those bundles: tree-sitter and tree-sitter-c-sharp (MIT), tree-sitter-python (MIT),
 libyaml (MIT), PCRE 8.45 and PCRE2 10.43 (BSD-3-Clause), js_of_ocaml runtime (LGPL-2.1 with linking

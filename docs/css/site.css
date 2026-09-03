@@ -142,3 +142,5 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
   .editor-block.target { height: 420px; }
   .top .brand .sub { display: none; }
 }
+
+.disclaimer { color: var(--muted, #667); font-size: 0.9em; }
