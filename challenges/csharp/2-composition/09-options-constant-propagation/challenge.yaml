@@ -27,10 +27,9 @@ followup: |
   match, exactly as if the literal were inline. The named-argument syntax `issuer: "..."` matches the
   argument by *name*, so its position among the other arguments does not matter.
 
-  Constant propagation reaches further than locals: the current Semgrep CLI also folds `const`
-  fields — `Encoding.UTF8.GetBytes(secret)` with `secret = TokenSecret` matches
-  `$ENC.GetBytes("...")` there. The 2023 browser engine on this site only follows locals and
-  literal concatenation, so this challenge sticks to the `issuer` local.
+  Constant propagation reaches further than locals: Semgrep also folds `const` fields —
+  `Encoding.UTF8.GetBytes(secret)` with `secret = TokenSecret` matches `$ENC.GetBytes("...")` as
+  well. This challenge sticks to the `issuer` local so that the switch has one visible effect.
 
   `options:` holds a handful of such switches. Two others: `symmetric_eq` (treat `a == b` and
   `b == a` alike) and `taint_unify_mvars` (require the same metavariable binding at a taint source

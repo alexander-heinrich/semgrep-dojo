@@ -1,11 +1,11 @@
 {
  "version": 1,
- "generatedAt": "2026-09-02T21:54:43+00:00",
+ "generatedAt": "2026-09-03T15:06:19+00:00",
  "semgrepCliVersion": "1.172.0",
  "engine": {
-  "engine": "@semgrep/engine@1.17.1-alpha.2",
-  "csharp": "@semgrep/languages@1.17.1-alpha.0",
-  "python": "@semgrep/lang-python@0.0.4"
+  "engine": "semgrep v1.81.0 js/engine (own build, scripts/rebuild-engine)",
+  "csharp": "semgrep v1.81.0 js/languages/csharp",
+  "python": "semgrep v1.81.0 js/languages/python"
  },
  "levels": [
   {
@@ -160,7 +160,7 @@
       76
      ],
      "modified": true,
-     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; the comments, commented-out code, a local `const string filename` and the event handlers inside RunAsync dropped and replaced by a single `// ... (omitted)`; the second Console.WriteLine call (lines 35-36) split over two lines to show that line breaks do not matter; annotation comments added."
+     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace; the comments, commented-out code, a local `const string filename` and the event handlers inside RunAsync dropped and replaced by a single `// ... (omitted)`; the second Console.WriteLine call (lines 35-36) split over two lines to show that line breaks do not matter; annotation comments added."
     }
    ],
    "starter": "rules:\n  - id: press-any-key\n    message: Exit prompt found - this method waits for the user before it returns\n    languages: [csharp]\n    severity: INFO\n    pattern: Console.WriteLine(\"Press any key to exit.\")\n",
@@ -505,7 +505,7 @@
       69
      ],
      "modified": true,
-     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; two annotation comments added."
+     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace; two annotation comments added."
     }
    ],
    "starter": "rules:\n  - id: claim-literal-value\n    message: Claim $TYPE is created with a hard-coded value\n    languages: [csharp]\n    severity: WARNING\n    pattern: new Claim($TYPE, $VALUE)\n",
@@ -867,7 +867,7 @@
       85
      ],
      "modified": true,
-     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; the `using` lines are the three of the original file's that the snippet needs; the rest of the method body after the four local functions is replaced by `// ... (omitted)`; four annotation comments added."
+     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace; the `using` lines are the three of the original file's that the snippet needs; the rest of the method body after the four local functions is replaced by `// ... (omitted)`; four annotation comments added."
     }
    ],
    "starter": "rules:\n  - id: file-delete\n    message: File.Delete() removes a file on disk — check where the path comes from\n    languages: [csharp]\n    severity: WARNING\n    pattern: |\n      public void $M(...) {\n        ...\n        File.Delete(...);\n        ...\n      }\n",
@@ -961,10 +961,10 @@
    "hints": [
     "Semgrep parses a pattern with the same grammar as the code. `if (x)` on its own is not a complete statement — but Semgrep's lenient pattern parser can read `if(x)` as an *expression*: a call to a method named `if`. That is what the starter looks for, so it finds nothing.",
     "Give the `if` a body. Inside braces, `...` stands for any sequence of statements, so the body stays unconstrained.",
-    "In current Semgrep `if (string.IsNullOrEmpty($X)) { ... }` is the canonical answer. The 2023 browser engine on this site has a bug with a lone `...` in an `if` body after a call condition — write the body as `{ $S; ... }` (one statement, then anything); both engines accept that."
+    "`if (string.IsNullOrEmpty($X)) { ... }` is the canonical answer. `{ $S; ... }` (one statement, then anything) would also work, but it additionally demands a non-empty body."
    ],
    "followup_title": "That's it!",
-   "followup": "`if (string.IsNullOrEmpty($X)) { $S; ... }` is a complete statement, so Semgrep compares it with the\n`if` statements in the file: the condition must be a call to `string.IsNullOrEmpty` with one\nargument, and the body accepts any non-empty statement list — an assignment on line 52, a `return`\non line 58. With the real Semgrep CLI the idiomatic body is simply `{ ... }`; the browser engine\non this site is a 2023 snapshot that mishandles a lone `...` after a call condition, which is why\nthe site suggests `{ $S; ... }` when you use `{ ... }` here. The other checks have different\nconditions (`user == null`, `a && b`, the negated `!string.IsNullOrWhiteSpace(...)`), so they\nare left alone.\n\nTwo details are worth remembering. The braces in the pattern do not require braces in the code:\n`{ ... }` and one-statement bodies such as `{ $S; }` or `{ return NotFound(); }` also match a\nbrace-less body like `if (string.IsNullOrEmpty(id)) return NotFound();` (the two-element\nworkaround `{ $S; ... }` is the exception — it needs a real block), and an `else if` chain is\njust an `if` nested in an `else`, so a chain yields one match per `if`. And names are compared\ntextually: this code says `string`, so `String.IsNullOrEmpty($X)` would find nothing here,\nalthough both spellings mean the same type in C#.\n\nIf you have the CLI at hand, `semgrep show dump-pattern csharp 'if ($C)'` shows the pitfall\ndirectly: the dump is an expression (`E(Call(...))`) whose callee is the identifier `if`.\n\n**Try this:** replace the body with `{ return NotFound(); }` — now only line 58 matches, because\nthe braces describe the body, not just the header. Then use the general form `if ($C) { ... }`:\nit reports all eight `if` statements in the file, which is the usual starting point when you\nlater narrow the condition down with `pattern-not` or `metavariable-pattern`.\n",
+   "followup": "`if (string.IsNullOrEmpty($X)) { ... }` is a complete statement, so Semgrep compares it with the\n`if` statements in the file: the condition must be a call to `string.IsNullOrEmpty` with one\nargument, and the body accepts any statement list — an assignment on line 52, a `return` on\nline 58. It also matches an `if` without braces, because Semgrep compares statements, not\ncharacters. The other checks have different conditions (`user == null`, `a && b`, the negated\n`!string.IsNullOrWhiteSpace(...)`), so they are left alone.\n\nTwo details are worth remembering. The braces in the pattern do not require braces in the code:\n`{ ... }` and one-statement bodies such as `{ $S; }` or `{ return NotFound(); }` also match a\nbrace-less body like `if (string.IsNullOrEmpty(id)) return NotFound();` (the two-element\nworkaround `{ $S; ... }` is the exception — it needs a real block), and an `else if` chain is\njust an `if` nested in an `else`, so a chain yields one match per `if`. And names are compared\ntextually: this code says `string`, so `String.IsNullOrEmpty($X)` would find nothing here,\nalthough both spellings mean the same type in C#.\n\nIf you have the CLI at hand, `semgrep show dump-pattern csharp 'if ($C)'` shows the pitfall\ndirectly: the dump is an expression (`E(Call(...))`) whose callee is the identifier `if`.\n\n**Try this:** replace the body with `{ return NotFound(); }` — now only line 58 matches, because\nthe braces describe the body, not just the header. Then use the general form `if ($C) { ... }`:\nit reports all eight `if` statements in the file, which is the usual starting point when you\nlater narrow the condition down with `pattern-not` or `metavariable-pattern`.\n",
    "sources": [
     {
      "repo": "OrchardCMS/OrchardCore",
@@ -978,11 +978,11 @@
       90
      ],
      "modified": true,
-     "modification_note": "File-scoped namespace (C# 10) turned into a block so the 2023 browser parser accepts it; fields, constructor and the ConfirmEmailSent member replaced by `// ... (omitted)`; annotation comments added."
+     "modification_note": "File-scoped namespace (C# 10) turned into a block; fields, constructor and the ConfirmEmailSent member replaced by `// ... (omitted)`; annotation comments added."
     }
    ],
    "starter": "rules:\n  - id: null-or-empty-guard\n    message: \"$X is only checked with string.IsNullOrEmpty; consider string.IsNullOrWhiteSpace so that blank input is rejected as well\"\n    languages: [csharp]\n    severity: INFO\n    pattern: if (string.IsNullOrEmpty($X))\n",
-   "solution": "rules:\n  - id: null-or-empty-guard\n    message: \"$X is only checked with string.IsNullOrEmpty; consider string.IsNullOrWhiteSpace so that blank input is rejected as well\"\n    languages: [csharp]\n    severity: INFO\n    pattern: if (string.IsNullOrEmpty($X)) { $S; ... }\n",
+   "solution": "rules:\n  - id: null-or-empty-guard\n    message: \"$X is only checked with string.IsNullOrEmpty; consider string.IsNullOrWhiteSpace so that blank input is rejected as well\"\n    languages: [csharp]\n    severity: INFO\n    pattern: if (string.IsNullOrEmpty($X)) { ... }\n",
    "target": "// Source: https://github.com/OrchardCMS/OrchardCore/blob/7418cecfe38deed1398becb6f3520c4fa7786b6e/src/OrchardCore.Modules/OrchardCore.Users/Controllers/EmailConfirmationController.cs  (lines 1-121)\n// Copyright (c) .NET Foundation. Licensed under BSD-3-Clause. See THIRD_PARTY_NOTICES.md.\n// Modified for this tutorial: yes — file-scoped namespace turned into a block; fields, constructor and ConfirmEmailSent omitted; annotation comments added.\nusing Microsoft.AspNetCore.Authorization;\nusing Microsoft.AspNetCore.Mvc;\n\nnamespace OrchardCore.Users.Controllers\n{\n    public sealed class EmailConfirmationController : Controller\n    {\n        // ... (omitted)\n\n        [AllowAnonymous]\n        public async Task<IActionResult> ConfirmEmail(string userId, string code)\n        {\n            // ok: null-or-empty-guard\n            if (userId == null || code == null)\n            {\n                return NotFound();\n            }\n\n            var user = await _userManager.FindByIdAsync(userId);\n\n            // ok: null-or-empty-guard\n            if (user == null)\n            {\n                return NotFound();\n            }\n\n            var result = await _userManager.ConfirmEmailAsync(user, code);\n\n            if (result.Succeeded)\n            {\n                var userContext = new UserConfirmContext(user) { ConfirmationType = UserConfirmationType.Email };\n                await _userEventHandlers.InvokeAsync((handler, context) => handler.ConfirmedAsync(userContext), userContext, _logger);\n\n                return View();\n            }\n\n            return NotFound();\n        }\n\n        // ... (omitted)\n\n        [Authorize]\n        [HttpPost]\n        public async Task<IActionResult> SendVerificationEmail(string id = null, string returnUrl = null)\n        {\n            var currentUserId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);\n\n            // ruleid: null-or-empty-guard\n            if (string.IsNullOrEmpty(id))\n            {\n                id = currentUserId;\n            }\n\n            // ruleid: null-or-empty-guard\n            if (string.IsNullOrEmpty(id))\n            {\n                return NotFound();\n            }\n\n            // Allow users to verify their own email without the 'ManageUsers' permission.\n            // ok: null-or-empty-guard\n            if (id != currentUserId && !await _authorizationService.AuthorizeAsync(User, UsersPermissions.ManageUsers))\n            {\n                return Forbid();\n            }\n\n            var user = await _userManager.FindByIdAsync(id) as User;\n\n            if (user == null)\n            {\n                return NotFound();\n            }\n\n            await _userEmailService.SendEmailConfirmationAsync(user);\n\n            await _notifier.SuccessAsync(H[\"Verification email sent.\"]);\n\n            // ok: null-or-empty-guard\n            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))\n            {\n                return Redirect(returnUrl);\n            }\n\n            return RedirectToAction(nameof(AdminController.Index), typeof(AdminController).ControllerName());\n        }\n    }\n}\n",
    "solution_rules": {
     "rules": [
@@ -993,7 +993,7 @@
        "csharp"
       ],
       "severity": "INFO",
-      "pattern": "if (string.IsNullOrEmpty($X)) { $S; ... }"
+      "pattern": "if (string.IsNullOrEmpty($X)) { ... }"
      }
     ]
    },
@@ -1427,7 +1427,7 @@
     "`_writer.Write((string $X))` — two sets of parentheses: the call's and the typed metavariable's."
    ],
    "followup_title": "Correct!",
-   "followup": "`s` is declared as `string s` in the parameter list of `AddString`, so `(string $X)` accepts it. In\n`AddCaseInsensitiveString`, the argument is `s.ToUpperInvariant()` — a method call, and Semgrep does\nnot infer the return types of calls, so it is *not* matched even though a human knows it is a\nstring. The `i` parameters of `AddInt` and `AddLong` are an `int` and a `long`, `o` is an `object`\nand `d.Ticks` is a member of a `DateTime` — none of them is a `string`, so they are rejected.\n\nThis is the rule of thumb for typed metavariables: they are precise but conservative. Unknown types\nnever match, so use them to *narrow* a pattern, never to *find* everything of a type.\n\n**Try this:** change the type to `(long $X)` — `AddLong` matches, but `d.Ticks` does not, although\nit is a `long` too: Semgrep does not resolve members of `DateTime`. (The Semgrep CLI also reports\n`AddInt` here, because current releases treat `int` and `long` as compatible integer types; the\nbrowser engine is stricter.) Then try `(object $X)` — only `AddObject` matches: `object` is not\ntreated as \"anything\".\n",
+   "followup": "`s` is declared as `string s` in the parameter list of `AddString`, so `(string $X)` accepts it. In\n`AddCaseInsensitiveString`, the argument is `s.ToUpperInvariant()` — a method call, and Semgrep does\nnot infer the return types of calls, so it is *not* matched even though a human knows it is a\nstring. The `i` parameters of `AddInt` and `AddLong` are an `int` and a `long`, `o` is an `object`\nand `d.Ticks` is a member of a `DateTime` — none of them is a `string`, so they are rejected.\n\nThis is the rule of thumb for typed metavariables: they are precise but conservative. Unknown types\nnever match, so use them to *narrow* a pattern, never to *find* everything of a type.\n\n**Try this:** change the type to `(long $X)` — `AddLong` matches, and so does `AddInt`, because\nSemgrep treats `int` and `long` as compatible integer types; `d.Ticks` does not match although it\nis a `long` too, because Semgrep does not resolve members of `DateTime`. Then try `(object $X)` —\nonly `AddObject` matches: `object` is not treated as \"anything\".\n",
    "sources": [
     {
      "repo": "umbraco/Umbraco-CMS",
@@ -1913,7 +1913,7 @@
       70
      ],
      "modified": true,
-     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; annotation comments added."
+     "modification_note": "File-scoped namespace (C# 10) turned into a block namespace; annotation comments added."
     }
    ],
    "starter": "rules:\n  - id: redirect-to-variable\n    message: redirect target $U comes from a variable — check it is a local URL\n    languages: [csharp]\n    severity: WARNING\n    patterns:\n      - pattern: Redirect($U)\n",
@@ -2161,8 +2161,7 @@
    "instructions": "Two redirects to a request-controlled `returnUrl`. The aspnetcore sample is safe: its redirect sits\ninside `if (Url.IsLocalUrl(returnUrl)) { ... }`. AspGoat's `OpenRedirect` only checks for `null` — a\ntextbook open redirect.\n\nThe starter already excludes literal redirects, so it reports both parameter redirects. We want the\nguarded one gone. `pattern-not-inside` is the negative twin of `pattern-inside`: it drops matches\nthat lie within the given code, and — like `pattern-inside` — it unifies metavariables with the main\npattern.\n\nAdd a `pattern-not-inside` entry for an `if` whose condition is `Url.IsLocalUrl(...)` applied to\nthe *same* value that is being redirected to.\n",
    "hints": [
     "The enclosing code is an `if` statement; write it as a complete statement with a body.",
-    "Reuse `$U`: `if (Url.IsLocalUrl($U)) { $S; ... }` — the guard must test the redirected value, not just any value.",
-    "Body note: current Semgrep accepts `{ ... }`; the browser engine on this site needs `{ $S; ... }` for an if-body after a call condition."
+    "Reuse `$U`: `if (Url.IsLocalUrl($U)) { ... }` — the guard must test the redirected value, not just any value."
    ],
    "followup_title": "Correct!",
    "followup": "`pattern-not-inside: if (Url.IsLocalUrl($U)) { $S; ... }` removes the aspnetcore match because that\n`Redirect(returnUrl)` is nested in an `if` guarding exactly `returnUrl`. AspGoat's `if (returnUrl != null)`\nis an `if` too, but its condition is not `Url.IsLocalUrl(...)`, so the redirect stays reported.\n\nUnification matters here: with `if (Url.IsLocalUrl($OTHER))` the exclusion would also fire for a\nredirect to `b` guarded by a check of `a` — a classic false negative.\n\n**Try this:** change the guard to `if (Url.IsLocalUrl($U)) { ... } else { ... }` — the aspnetcore\nredirect has an `else` branch, so it is still excluded; AspGoat's is not. Then remove the\n`pattern-not` entry and watch `Redirect(\"/\")` come back: every entry under `patterns:` is independent.\n",
@@ -2197,7 +2196,7 @@
     }
    ],
    "starter": "rules:\n  - id: open-redirect\n    message: $U is redirected to without a local-URL check\n    languages: [csharp]\n    severity: ERROR\n    patterns:\n      - pattern: Redirect($U)\n      - pattern-not: Redirect(\"...\")\n",
-   "solution": "rules:\n  - id: open-redirect\n    message: $U is redirected to without a local-URL check\n    languages: [csharp]\n    severity: ERROR\n    patterns:\n      - pattern: Redirect($U)\n      - pattern-not: Redirect(\"...\")\n      - pattern-not-inside: |\n          if (Url.IsLocalUrl($U)) { $S; ... }\n",
+   "solution": "rules:\n  - id: open-redirect\n    message: $U is redirected to without a local-URL check\n    languages: [csharp]\n    severity: ERROR\n    patterns:\n      - pattern: Redirect($U)\n      - pattern-not: Redirect(\"...\")\n      - pattern-not-inside: |\n          if (Url.IsLocalUrl($U)) { ... }\n",
    "target": "// Source: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs  (lines 4-54, 61-66) and https://github.com/Soham7-dev/AspGoat/blob/db3153f5dae036a9d67e12be22548299855c6b40/Controllers/HomeController.cs  (lines 18, 21-22, 159-168, 444)\n// Copyright (c) .NET Foundation and Contributors (MIT); Copyright (c) 2025 Soham Das (MIT). See THIRD_PARTY_NOTICES.md.\n// Modified for this tutorial: yes — two files combined; file-scoped namespace turned into a block; unrelated members replaced by `// ... (omitted)`; the class-level `[Authorize]` attribute in HomeController dropped; annotation comments added.\nusing System.Collections.Generic;\nusing System.Security.Claims;\nusing System.Threading.Tasks;\nusing Microsoft.AspNetCore.Authentication;\nusing Microsoft.AspNetCore.Mvc;\n\nnamespace AuthSamples.Cookies.Controllers\n{\n    public class AccountController : Controller\n    {\n        // ... (omitted)\n\n        [HttpPost]\n        public async Task<IActionResult> Login(string userName, string password, string returnUrl = null)\n        {\n            ViewData[\"ReturnUrl\"] = returnUrl;\n\n            // Normally Identity handles sign in, but you can do it directly\n            if (ValidateLogin(userName, password))\n            {\n                var claims = new List<Claim>\n                    {\n                        new Claim(\"user\", userName),\n                        new Claim(\"role\", \"Member\")\n                    };\n\n                await HttpContext.SignInAsync(new ClaimsPrincipal(new ClaimsIdentity(claims, \"Cookies\", \"user\", \"role\")));\n\n                if (Url.IsLocalUrl(returnUrl))\n                {\n                    // ok: open-redirect\n                    return Redirect(returnUrl);\n                }\n                else\n                {\n                    // ok: open-redirect\n                    return Redirect(\"/\");\n                }\n            }\n\n            return View();\n        }\n\n        // ... (omitted)\n\n        public async Task<IActionResult> Logout()\n        {\n            await HttpContext.SignOutAsync();\n            // ok: open-redirect\n            return Redirect(\"/\");\n        }\n    }\n}\n\nnamespace AspGoat.Controllers\n{\n    public class HomeController : Controller\n    {\n        // ... (omitted)\n\n        [HttpGet]\n        public IActionResult OpenRedirect(string returnUrl)\n        {\n            if (returnUrl != null)\n            {\n                // ruleid: open-redirect\n                return Redirect(returnUrl);\n            }\n\n            return View();\n        }\n\n        // ... (omitted)\n    }\n}\n",
    "solution_rules": {
     "rules": [
@@ -2216,7 +2215,7 @@
         "pattern-not": "Redirect(\"...\")"
        },
        {
-        "pattern-not-inside": "if (Url.IsLocalUrl($U)) { $S; ... }\n"
+        "pattern-not-inside": "if (Url.IsLocalUrl($U)) { ... }\n"
        }
       ]
      }
@@ -2397,7 +2396,7 @@
     ]
    },
    "grade": "lines",
-   "wasm": "cli-only",
+   "wasm": "expected",
    "starter_expects_error": false,
    "instructions": "This model class from a deliberately vulnerable API (dvcsharp-api) declares four string\nconstants. Three are harmless role names; the fourth is a 64-character hex string used to sign JWTs\n— a hard-coded secret.\n\n`public const string $N = $V;` captures every constant. To keep only the secret we need to look\n*at the text* that `$V` captured. That is what `metavariable-regex` does: inside a `patterns:`\nblock it filters matches by running a regular expression over the source text bound to a\nmetavariable.\n\nAdd a `metavariable-regex` entry that keeps only values consisting of 32 or more hex digits.\nRemember that `$V` captured the literal *including its quotes*.\n",
    "hints": [
@@ -2405,7 +2404,7 @@
     "Anchor the regex and include the quotes: `^\"[0-9a-f]{32,}\"$`."
    ],
    "followup_title": "Correct!",
-   "followup": "`metavariable-regex` sees the raw source text of the binding — for a string literal that is\n`\"f449a71c…\"`, quotes included, which is why the regex starts with `\"`. It is also *left-anchored*:\nSemgrep only tries the regex at the beginning of the captured text, so the bare `[0-9a-f]{32,}`\nfinds nothing here (the text starts with a quote). The end is not anchored — `\"[0-9a-f]{32}` would\nmatch too — so the closing `\"$` is what stops a long hex prefix inside a longer literal from\npassing. The leading `^` is redundant but harmless; for a \"contains\" test, start the regex with `.*`.\n\nThe regex operators are among the few features the browser engine on this site cannot run\n(it has no regex library), which is why this challenge is checked with the real Semgrep CLI.\n\n**Try this:** run `metavariable-regex` on `$N` instead, with `regex: (?i)secret|token|password` — a\ncommon way to flag suspicious *names* rather than values. `TokenSecret` is still reported, but only\nbecause it *starts* with `Token`: change the regex to `(?i)secret` and the finding disappears;\n`(?i).*secret` brings it back. Then keep both the name check and the value check as two entries\nunder `patterns:` and see that they are ANDed.\n",
+   "followup": "`metavariable-regex` sees the raw source text of the binding — for a string literal that is\n`\"f449a71c…\"`, quotes included, which is why the regex starts with `\"`. It is also *left-anchored*:\nSemgrep only tries the regex at the beginning of the captured text, so the bare `[0-9a-f]{32,}`\nfinds nothing here (the text starts with a quote). The end is not anchored — `\"[0-9a-f]{32}` would\nmatch too — so the closing `\"$` is what stops a long hex prefix inside a longer literal from\npassing. The leading `^` is redundant but harmless; for a \"contains\" test, start the regex with `.*`.\n\n**Try this:** run `metavariable-regex` on `$N` instead, with `regex: (?i)secret|token|password` — a\ncommon way to flag suspicious *names* rather than values. `TokenSecret` is still reported, but only\nbecause it *starts* with `Token`: change the regex to `(?i)secret` and the finding disappears;\n`(?i).*secret` brings it back. Then keep both the name check and the value check as two entries\nunder `patterns:` and see that they are ANDed.\n",
    "sources": [
     {
      "repo": "appsecco/dvcsharp-api",
@@ -2524,7 +2523,7 @@
    "grade": "ranges",
    "wasm": "expected",
    "starter_expects_error": false,
-   "instructions": "The `Import` action deserializes the raw request body with an `XmlSerializer`. The starter rule\nfinds the call, and this time the *line* is not the problem — the **range** is.\n\nLook at the result after running the starter: the reported range is the whole call\n`serializer.Deserialize(reader)` — line 50, columns 37 to 67 (the browser engine lists a second\nrange on the same line that also takes in the `(Product[])` cast). Security findings are more\nuseful when they point at the untrusted *input*, and taint rules (coming up in Level 3) need to\nknow which sub-expression carries the data.\n\n`focus-metavariable: $X` inside a `patterns:` block narrows the reported range to whatever `$X`\ncaptured, without changing which places match. Add it to the starter so the finding covers only\n`reader` (line 50, columns 60 to 66).\n\nThis challenge is graded on exact ranges (start and end column), not just lines.\n",
+   "instructions": "The `Import` action deserializes the raw request body with an `XmlSerializer`. The starter rule\nfinds the call, and this time the *line* is not the problem — the **range** is.\n\nLook at the result after running the starter: the reported range is the whole call\n`serializer.Deserialize(reader)` — line 50, columns 37 to 67. Security findings are more\nuseful when they point at the untrusted *input*, and taint rules (coming up in Level 3) need to\nknow which sub-expression carries the data.\n\n`focus-metavariable: $X` inside a `patterns:` block narrows the reported range to whatever `$X`\ncaptured, without changing which places match. Add it to the starter so the finding covers only\n`reader` (line 50, columns 60 to 66).\n\nThis challenge is graded on exact ranges (start and end column), not just lines.\n",
    "hints": [
     "The starter binds two metavariables: `$S` (the serializer) and `$R` (the argument). Which one captures `reader`? That is the one to focus on.",
     "Add `- focus-metavariable: $R` as a second entry under `patterns:`."
@@ -2643,7 +2642,7 @@
     ]
    },
    "grade": "lines",
-   "wasm": "cli-only",
+   "wasm": "expected",
    "starter_expects_error": false,
    "instructions": "Every pattern so far worked on the *syntax tree*, which is why comments, whitespace and line\nbreaks never mattered. `pattern-regex` is different: it runs a regular expression over the raw\ntext of the file. That makes it the only way to match things the parser throws away — such as\nthe `// CTSECISSUE:` markers the IssueBlot authors left above each intentional bug.\n\nThe starter matches every marker, six in all. We only want the five SQL-injection markers; the\n`MVCViewCodeInjection` one at the bottom must not match.\n\nInside a `patterns:` block, `pattern-not-regex` removes every match that contains a match of its\nown regex (or sits inside one). Write a `pattern-not-regex` entry that drops the code-injection\nmarker.\n",
    "hints": [
@@ -2651,7 +2650,7 @@
     "`pattern-not-regex: 'CodeInjection'` — the regex only needs to match somewhere inside the marker it should remove."
    ],
    "followup_title": "Correct!",
-   "followup": "`pattern-regex` reported the six comment lines because regular expressions see the source as\ntext; `pattern-not-regex: 'CodeInjection'` then removed the one match that contains a\n`CodeInjection` match. A match is dropped when it contains, or sits inside, a `pattern-not-regex`\nmatch — a partial overlap is not enough (the docs say \"any overlap\", but the engine checks\ncontainment). The regex flavour is PCRE2 in multiline mode, so `^` and `$` also match at line\nboundaries, and character classes and groups work as usual — but a regex knows nothing about C#:\nit matches just as happily inside a string literal or a comment as in code.\n\nRegex operators combine with syntax patterns: a common idiom is `pattern: Foo(\"...\")` plus\n`pattern-regex: 'password'` under `patterns:` to require a substring in the matched text (the\nfinding is then reported at the regex hit, the inner of the two ranges). And since regexes see\n*everything*, a sloppy one would even match this site's own `// ruleid:` annotations — which is\nwhy the marker regex is anchored on `CTSECISSUE`.\n\nThe regex operators cannot run in the browser engine on this site (it has no regex library), so\nthis challenge is checked with the real Semgrep CLI.\n\n**Try this:** replace the solution with a single `pattern-regex: 'CTSECISSUE:\\s*SQL\\w*'` — same\nfive matches, no `pattern-not-regex` needed. Then compare `pattern-regex: 'input'` with the\nsyntax pattern `pattern: input`: the text search reports one hit more. Find it and work out why\nthe syntax pattern skips it.\n",
+   "followup": "`pattern-regex` reported the six comment lines because regular expressions see the source as\ntext; `pattern-not-regex: 'CodeInjection'` then removed the one match that contains a\n`CodeInjection` match. A match is dropped when it contains, or sits inside, a `pattern-not-regex`\nmatch — a partial overlap is not enough (the docs say \"any overlap\", but the engine checks\ncontainment). The regex flavour is PCRE2 in multiline mode, so `^` and `$` also match at line\nboundaries, and character classes and groups work as usual — but a regex knows nothing about C#:\nit matches just as happily inside a string literal or a comment as in code.\n\nRegex operators combine with syntax patterns: a common idiom is `pattern: Foo(\"...\")` plus\n`pattern-regex: 'password'` under `patterns:` to require a substring in the matched text (the\nfinding is then reported at the regex hit, the inner of the two ranges). And since regexes see\n*everything*, a sloppy one would even match this site's own `// ruleid:` annotations — which is\nwhy the marker regex is anchored on `CTSECISSUE`.\n\n**Try this:** replace the solution with a single `pattern-regex: 'CTSECISSUE:\\s*SQL\\w*'` — same\nfive matches, no `pattern-not-regex` needed. Then compare `pattern-regex: 'input'` with the\nsyntax pattern `pattern: input`: the text search reports one hit more. Find it and work out why\nthe syntax pattern skips it.\n",
    "sources": [
     {
      "repo": "CodeThreat/IssueBlot.NET",
@@ -2806,7 +2805,7 @@
     "`constant_propagation: true` (or simply delete the `options:` block — true is the default)."
    ],
    "followup_title": "Correct!",
-   "followup": "With propagation on, Semgrep follows `issuer` back to `\"http://localhost.local/\"` and lets `\"...\"`\nmatch, exactly as if the literal were inline. The named-argument syntax `issuer: \"...\"` matches the\nargument by *name*, so its position among the other arguments does not matter.\n\nConstant propagation reaches further than locals: the current Semgrep CLI also folds `const`\nfields — `Encoding.UTF8.GetBytes(secret)` with `secret = TokenSecret` matches\n`$ENC.GetBytes(\"...\")` there. The 2023 browser engine on this site only follows locals and\nliteral concatenation, so this challenge sticks to the `issuer` local.\n\n`options:` holds a handful of such switches. Two others: `symmetric_eq` (treat `a == b` and\n`b == a` alike) and `taint_unify_mvars` (require the same metavariable binding at a taint source\nand sink), which you will meet in Level 3.\n\n**Try this:** set `constant_propagation: false` again and change the pattern to\n`new $T(..., issuer: issuer, ...)` — an exact name works regardless of propagation, but it is\nfragile. Then try `new $T(..., audience: \"...\", ...)` with propagation on.\n",
+   "followup": "With propagation on, Semgrep follows `issuer` back to `\"http://localhost.local/\"` and lets `\"...\"`\nmatch, exactly as if the literal were inline. The named-argument syntax `issuer: \"...\"` matches the\nargument by *name*, so its position among the other arguments does not matter.\n\nConstant propagation reaches further than locals: Semgrep also folds `const` fields —\n`Encoding.UTF8.GetBytes(secret)` with `secret = TokenSecret` matches `$ENC.GetBytes(\"...\")` as\nwell. This challenge sticks to the `issuer` local so that the switch has one visible effect.\n\n`options:` holds a handful of such switches. Two others: `symmetric_eq` (treat `a == b` and\n`b == a` alike) and `taint_unify_mvars` (require the same metavariable binding at a taint source\nand sink), which you will meet in Level 3.\n\n**Try this:** set `constant_propagation: false` again and change the pattern to\n`new $T(..., issuer: issuer, ...)` — an exact name works regardless of propagation, but it is\nfragile. Then try `new $T(..., audience: \"...\", ...)` with propagation on.\n",
    "sources": [
     {
      "repo": "appsecco/dvcsharp-api",
@@ -2903,7 +2902,7 @@
     ]
    },
    "grade": "lines",
-   "wasm": "cli-only",
+   "wasm": "expected",
    "starter_expects_error": false,
    "instructions": "Not every finding is worth reporting everywhere. This Dapper file lives at\n`tests/Dapper.Tests/ProcedureTests.cs`, and stored-procedure calls in a *test suite* are exactly\nwhat you would expect. The starter rule reports all three of them.\n\nA rule can restrict the files it applies to with a top-level `paths:` key holding `include:` and\n`exclude:` lists of glob patterns, matched against each file's path relative to the project root\n(the Git root, or the scanned directory when there is no repository).\n\nAdd a `paths:` block that excludes everything under `tests/`, so that this file produces **zero**\nfindings. (The site knows the target's path; every call is marked `○ must not match`.)\n",
    "hints": [
@@ -2911,7 +2910,7 @@
     "`exclude: [\"tests/**\"]` — the `**` glob matches any number of directory levels."
    ],
    "followup_title": "Correct!",
-   "followup": "`paths.exclude: [\"tests/**\"]` removes the file from the rule's scope before any pattern is tried,\nso nothing is reported. `include:` works the other way round (only listed globs are scanned), and\nboth accept several entries.\n\nPath filtering is applied per rule, which is why it is a rule key and not a CLI flag; the CLI flags\n`--include` / `--exclude` do the same for a whole run. Semgrep even agrees with you about test\ncode: when you point the CLI at a directory, its built-in `.semgrepignore` defaults already skip\n`test/` and `tests/`; a file named explicitly on the command line (which is how `scripts/check.py`\nruns this target) is scanned regardless. The browser engine on this site sees a single file with no\ndirectory context and ignores `paths`, so this challenge is CLI-only.\n\n**Try this:** change it to `include: [\"src/**\"]` — same effect for this file. Then try\n`exclude: [\"*Tests.cs\"]`: a glob without a slash matches the file *name* anywhere in the tree.\n",
+   "followup": "`paths.exclude: [\"tests/**\"]` removes the file from the rule's scope before any pattern is tried,\nso nothing is reported. `include:` works the other way round (only listed globs are scanned), and\nboth accept several entries.\n\nPath filtering is applied per rule, which is why it is a rule key and not a CLI flag; the CLI flags\n`--include` / `--exclude` do the same for a whole run. Semgrep even agrees with you about test\ncode: when you point the CLI at a directory, its built-in `.semgrepignore` defaults already skip\n`test/` and `tests/`; a file named explicitly on the command line (which is how `scripts/check.py`\nruns this target) is scanned regardless. The browser engine on this site applies `paths` to the\ntarget's path (`tests/Dapper.Tests/ProcedureTests.cs`) in the same way, so the exclude takes effect\nhere too.\n\n**Try this:** change it to `include: [\"src/**\"]` — same effect for this file. Then try\n`exclude: [\"*Tests.cs\"]`: a glob without a slash matches the file *name* anywhere in the tree.\n",
    "sources": [
     {
      "repo": "DapperLib/Dapper",
@@ -3280,7 +3279,7 @@
     "`comparison: $N > 15`."
    ],
    "followup_title": "Correct!",
-   "followup": "`$N` is bound to the literal `30` in one call and `10` in the other; the comparison `$N > 15`\nholds only for the first. The comparison language is a Python-like expression evaluator: numeric\noperators, `and` / `or` / `not`, and a few helpers such as `int(...)`, `str(...)` and `today()`;\n`re.match(...)` works in the CLI only (the browser engine on this site has no regex support, so\nit lets every binding through). That Python-like syntax is also why the browser engine here ships\na small Python parser.\n\nComparisons need a value they can evaluate. A literal works, and so does a local that constant\npropagation resolves to one (`int n = 30; ... AddMinutes(n)` is still reported). If the argument is\nsomething Semgrep cannot resolve — a parameter, `AddMinutes(lifetime)` — the comparison fails and\nthe match is dropped; a comparison cannot help there, so match the call without it or track the\nvalue with a taint rule.\n\n**Try this:** use `comparison: $N > 15 and $N < 60` — same result. Then compare in seconds\ninstead, `comparison: $N * 60 > 900` — still only the 30-minute token (1800 > 900, but 600 is not).\n",
+   "followup": "`$N` is bound to the literal `30` in one call and `10` in the other; the comparison `$N > 15`\nholds only for the first. The comparison language is a Python-like expression evaluator: numeric\noperators, `and` / `or` / `not`, and a few helpers such as `int(...)`, `str(...)`, `today()` and\n`re.match(...)` — `re.match(\"^3\", str($N))` would single out the same call. That Python-like\nsyntax is also why the browser engine here ships a small Python parser.\n\nComparisons need a value they can evaluate. A literal works, and so does a local that constant\npropagation resolves to one (`int n = 30; ... AddMinutes(n)` is still reported). If the argument is\nsomething Semgrep cannot resolve — a parameter, `AddMinutes(lifetime)` — the comparison fails and\nthe match is dropped; a comparison cannot help there, so match the call without it or track the\nvalue with a taint rule.\n\n**Try this:** use `comparison: $N > 15 and $N < 60` — same result. Then compare in seconds\ninstead, `comparison: $N * 60 > 900` — still only the 30-minute token (1800 > 900, but 600 is not).\n",
    "sources": [
     {
      "repo": "appsecco/dvcsharp-api",
@@ -3406,7 +3405,7 @@
     ]
    },
    "grade": "lines",
-   "wasm": "cli-only",
+   "wasm": "expected",
    "starter_expects_error": false,
    "instructions": "Same four constants as in the `metavariable-regex` challenge, different tool. A regex for \"32+ hex\ndigits\" only finds secrets that happen to be hex. Real secrets come in many shapes; what they have in\ncommon is that they look *random*.\n\n`metavariable-analysis` runs a built-in analyzer over a captured value. The `entropy` analyzer\nreports strings whose character distribution looks random enough to be a key or token; the `redos`\nanalyzer flags regular expressions vulnerable to catastrophic backtracking. Those are the two the\nopen-source engine implements — the rule schema also accepts `entropy_v2`, but that one needs the\nPro engine and quietly matches nothing in the plain CLI.\n\nAdd a `metavariable-analysis` entry under `patterns:` so that only the high-entropy `TokenSecret`\nmatches and the three role names do not.\n",
    "hints": [
@@ -3414,7 +3413,7 @@
     "`- metavariable-analysis: {metavariable: $V, analyzer: entropy}`"
    ],
    "followup_title": "Correct!",
-   "followup": "Entropy analysis has no idea what a secret *is* — it just measures how unpredictable the characters\nare. `\"User\"` and `\"Administrator\"` are ordinary English; `\"f449a71c…\"` is not. This is how\nSemgrep's generic-secrets rules and many secret scanners work, and it complements name-based and\nformat-based checks rather than replacing them.\n\nLike the regex operators, `metavariable-analysis` cannot run in the browser engine on this site, so\nthis one is verified with the real CLI.\n\n**Try this:** add a fifth constant `public const string Greeting = \"hello hello hello\";` to the\ntarget in your local checkout — low entropy, no match. Then paste a real API key or a long\nbase64 blob — the analyzer flags it, no hex required. It is only a heuristic, though:\n`\"The quick brown fox jumps over the lazy dog\"` is flagged as well — letter-diverse English looks\nrandom enough — while `\"http://localhost.local/\"` is not.\n",
+   "followup": "Entropy analysis has no idea what a secret *is* — it just measures how unpredictable the characters\nare. `\"User\"` and `\"Administrator\"` are ordinary English; `\"f449a71c…\"` is not. This is how\nSemgrep's generic-secrets rules and many secret scanners work, and it complements name-based and\nformat-based checks rather than replacing them.\n\n**Try this:** add a fifth constant `public const string Greeting = \"hello hello hello\";` to the\ntarget in your local checkout — low entropy, no match. Then paste a real API key or a long\nbase64 blob — the analyzer flags it, no hex required. It is only a heuristic, though:\n`\"The quick brown fox jumps over the lazy dog\"` is flagged as well — letter-diverse English looks\nrandom enough — while `\"http://localhost.local/\"` is not.\n",
    "sources": [
     {
      "repo": "appsecco/dvcsharp-api",

@@ -7,7 +7,7 @@ tags: [paths]
 covers:
   cheatsheet: [function-call]
   rule_keys: [paths, pattern]
-wasm: cli-only
+wasm: expected
 instructions: |
   Not every finding is worth reporting everywhere. This Dapper file lives at
   `tests/Dapper.Tests/ProcedureTests.cs`, and stored-procedure calls in a *test suite* are exactly
@@ -34,8 +34,9 @@ followup: |
   `--include` / `--exclude` do the same for a whole run. Semgrep even agrees with you about test
   code: when you point the CLI at a directory, its built-in `.semgrepignore` defaults already skip
   `test/` and `tests/`; a file named explicitly on the command line (which is how `scripts/check.py`
-  runs this target) is scanned regardless. The browser engine on this site sees a single file with no
-  directory context and ignores `paths`, so this challenge is CLI-only.
+  runs this target) is scanned regardless. The browser engine on this site applies `paths` to the
+  target's path (`tests/Dapper.Tests/ProcedureTests.cs`) in the same way, so the exclude takes effect
+  here too.
 
   **Try this:** change it to `include: ["src/**"]` — same effect for this file. Then try
   `exclude: ["*Tests.cs"]`: a glob without a slash matches the file *name* anywhere in the tree.

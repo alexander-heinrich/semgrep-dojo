@@ -7,4 +7,4 @@ rules:
       - pattern: Redirect($U)
       - pattern-not: Redirect("...")
       - pattern-not-inside: |
-          if (Url.IsLocalUrl($U)) { $S; ... }
+          if (Url.IsLocalUrl($U)) { ... }

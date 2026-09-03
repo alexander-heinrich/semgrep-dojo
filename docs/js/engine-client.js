@@ -1,9 +1,10 @@
 // Main-thread facade for the engine worker: download progress, lazy start, serialized runs, timeout.
 const VENDOR_FILES = [
-  ['vendor/semgrep/engine-1.17.1-alpha.2.mjs', 4709490],
-  ['vendor/semgrep/csharp-1.17.1-alpha.0.mjs', 8869263],
-  ['vendor/semgrep/python-0.0.4.mjs', 3223869],
-  ['vendor/semgrep/semgrep-parser.wasm', 432026],
+  ['vendor/semgrep/engine-1.81.0.mjs', 6351287],
+  ['vendor/semgrep/csharp-1.81.0.mjs', 3351311],
+  ['vendor/semgrep/csharp-1.81.0.wasm', 5693063],
+  ['vendor/semgrep/python-1.81.0.mjs', 3823434],
+  ['vendor/semgrep/python-1.81.0.wasm', 425874],
 ];
 const RUN_TIMEOUT_MS = 20000;
 

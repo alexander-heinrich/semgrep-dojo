@@ -53,4 +53,4 @@ sources:
     url: https://github.com/dotnet/MQTTnet/blob/18731d9f02345a0fcec899ebfbd4bff7c05a57ce/Source/MQTTnet.TestApp/ServerTest.cs
     lines: [4, 76]
     modified: true
-    modification_note: "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; the comments, commented-out code, a local `const string filename` and the event handlers inside RunAsync dropped and replaced by a single `// ... (omitted)`; the second Console.WriteLine call (lines 35-36) split over two lines to show that line breaks do not matter; annotation comments added."
+    modification_note: "File-scoped namespace (C# 10) turned into a block namespace; the comments, commented-out code, a local `const string filename` and the event handlers inside RunAsync dropped and replaced by a single `// ... (omitted)`; the second Console.WriteLine call (lines 35-36) split over two lines to show that line breaks do not matter; annotation comments added."

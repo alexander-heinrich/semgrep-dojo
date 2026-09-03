@@ -31,8 +31,8 @@ python3 scripts/check.py challenges/csharp/1-basics/07-any-depth --hint      # n
 python3 scripts/check.py challenges/csharp/1-basics/07-any-depth --solution
 ```
 
-Challenges marked **CLI only** on the site (regex operators, `metavariable-analysis`, `paths`) can only
-be practiced this way, because the 2023 browser engine cannot run them.
+Every challenge works both ways; the terminal path uses whatever `semgrep` (or Opengrep, see below) is
+on your `PATH`.
 
 ## Repository layout
 
@@ -44,7 +44,8 @@ be practiced this way, because the 2023 browser engine cannot run them.
 | `scripts/wasm_parity.mjs` | runs every solution through the browser engine (Node build) and compares with the CLI result |
 | `scripts/browser-test.mjs` | end-to-end check in headless Chrome over the DevTools protocol |
 | `scripts/fetch_snippet.py` | fetches a file from GitHub at a pinned commit and prints attribution blocks for authoring |
-| `scripts/vendor_semgrep.sh`, `scripts/vendor.mjs` | re-download the pinned engine builds / rebuild the editor bundle |
+| `scripts/rebuild-engine/` | Dockerfile + scripts that rebuild the browser engine from the Semgrep source tree (see below) |
+| `scripts/vendor.mjs` | rebuild the CodeMirror editor bundle |
 | `docs/` | the static site (served by GitHub Pages from `main` / `docs`) |
 | `spike/` | the feasibility spike for running Semgrep in the browser — read `spike/RESULTS.md` |
 
@@ -53,7 +54,8 @@ be practiced this way, because the 2023 browser engine cannot run them.
 ```sh
 npm install                      # only for scripts/vendor.mjs and wasm_parity (js-yaml for ad-hoc runs)
 python3 scripts/build.py         # validate all challenges, emit docs/data/challenges.json
-node scripts/wasm_parity.mjs     # browser-engine parity for every non-CLI-only challenge
+node scripts/wasm_parity.mjs     # browser-engine parity for every challenge
+node scripts/semantics_check.mjs # 67 pattern-semantics checks against the browser engine
 node scripts/browser-test.mjs --all   # headless Chrome end-to-end (needs Google Chrome installed)
 sh scripts/serve.sh              # http://127.0.0.1:8000/
 ```
@@ -70,12 +72,22 @@ write a starter that is a plausible near-miss, validate with
 
 ## The browser engine
 
-The site vendors `@semgrep/engine@1.17.1-alpha.2` with the C# parser from
-`@semgrep/languages@1.17.1-alpha.0` and `@semgrep/lang-python@0.0.4` (needed for
-`metavariable-comparison`), all published by Semgrep to npm in April 2023 (LGPL-2.1, used
-unmodified — see `THIRD_PARTY_NOTICES.md`). A small runtime shim supplies primitives the published
-parser bundle is missing. Known differences from current Semgrep are listed in `spike/RESULTS.md`
-and on the site's About page; every challenge is validated against the current CLI at build time.
+The site runs a WebAssembly build of the Semgrep OSS engine (js_of_ocaml + emscripten) that we build
+ourselves from the Semgrep source tree at tag `v1.81.0` (July 2024), the last release that still
+contains the `js/` build tooling — Semgrep moved it into its proprietary repository right after, and the
+npm packages it once published stopped in April 2023. The C# and Python parsers (`metavariable-comparison`
+parses its expression as Python) come from the same build.
+
+```sh
+sh scripts/rebuild-engine/build.sh     # Docker: OCaml 4.14 stage, then emscripten 3.1.51 stage → scripts/rebuild-engine/out/
+sh scripts/rebuild-engine/install.sh   # copy into docs/vendor/semgrep/ under versioned names, refresh SHA256SUMS
+```
+
+The build pins the opam repository to a snapshot from the release day and takes about 15 minutes on an
+Apple-silicon Mac with Colima (the emscripten stage runs under Rosetta). Everything is LGPL-2.1 and
+unmodified; see `THIRD_PARTY_NOTICES.md`. `scripts/semantics_check.mjs`, `scripts/wasm_parity.mjs` and
+the probes recorded in `spike/RESULTS.md` show this build agreeing with Semgrep 1.172.0 on every check;
+the same challenges also pass unchanged on Opengrep 1.29.0.
 
 ## License
 

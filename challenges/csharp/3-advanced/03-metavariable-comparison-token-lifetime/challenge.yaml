@@ -23,10 +23,9 @@ followup_title: Correct!
 followup: |
   `$N` is bound to the literal `30` in one call and `10` in the other; the comparison `$N > 15`
   holds only for the first. The comparison language is a Python-like expression evaluator: numeric
-  operators, `and` / `or` / `not`, and a few helpers such as `int(...)`, `str(...)` and `today()`;
-  `re.match(...)` works in the CLI only (the browser engine on this site has no regex support, so
-  it lets every binding through). That Python-like syntax is also why the browser engine here ships
-  a small Python parser.
+  operators, `and` / `or` / `not`, and a few helpers such as `int(...)`, `str(...)`, `today()` and
+  `re.match(...)` — `re.match("^3", str($N))` would single out the same call. That Python-like
+  syntax is also why the browser engine here ships a small Python parser.
 
   Comparisons need a value they can evaluate. A literal works, and so does a local that constant
   propagation resolves to one (`int n = 30; ... AddMinutes(n)` is still reported). If the argument is

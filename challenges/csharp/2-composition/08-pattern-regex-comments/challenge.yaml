@@ -6,7 +6,7 @@ tags: [pattern-regex, pattern-not-regex]
 covers:
   cheatsheet: [single-statements]
   rule_keys: [pattern-regex, pattern-not-regex, patterns]
-wasm: cli-only
+wasm: expected
 instructions: |
   Every pattern so far worked on the *syntax tree*, which is why comments, whitespace and line
   breaks never mattered. `pattern-regex` is different: it runs a regular expression over the raw
@@ -37,9 +37,6 @@ followup: |
   finding is then reported at the regex hit, the inner of the two ranges). And since regexes see
   *everything*, a sloppy one would even match this site's own `// ruleid:` annotations — which is
   why the marker regex is anchored on `CTSECISSUE`.
-
-  The regex operators cannot run in the browser engine on this site (it has no regex library), so
-  this challenge is checked with the real Semgrep CLI.
 
   **Try this:** replace the solution with a single `pattern-regex: 'CTSECISSUE:\s*SQL\w*'` — same
   five matches, no `pattern-not-regex` needed. Then compare `pattern-regex: 'input'` with the

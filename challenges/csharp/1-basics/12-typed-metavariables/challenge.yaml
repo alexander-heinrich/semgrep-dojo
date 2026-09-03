@@ -32,11 +32,10 @@ followup: |
   This is the rule of thumb for typed metavariables: they are precise but conservative. Unknown types
   never match, so use them to *narrow* a pattern, never to *find* everything of a type.
 
-  **Try this:** change the type to `(long $X)` — `AddLong` matches, but `d.Ticks` does not, although
-  it is a `long` too: Semgrep does not resolve members of `DateTime`. (The Semgrep CLI also reports
-  `AddInt` here, because current releases treat `int` and `long` as compatible integer types; the
-  browser engine is stricter.) Then try `(object $X)` — only `AddObject` matches: `object` is not
-  treated as "anything".
+  **Try this:** change the type to `(long $X)` — `AddLong` matches, and so does `AddInt`, because
+  Semgrep treats `int` and `long` as compatible integer types; `d.Ticks` does not match although it
+  is a `long` too, because Semgrep does not resolve members of `DateTime`. Then try `(object $X)` —
+  only `AddObject` matches: `object` is not treated as "anything".
 sources:
   - repo: umbraco/Umbraco-CMS
     path: src/Umbraco.Core/HashGenerator.cs

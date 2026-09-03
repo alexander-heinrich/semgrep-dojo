@@ -5,25 +5,27 @@ following third-party components.
 
 ## 1. Semgrep engine and parsers (LGPL-2.1)
 
-`docs/vendor/semgrep/` contains unmodified files published on npm by Semgrep, Inc.:
+`docs/vendor/semgrep/` contains a WebAssembly/JavaScript build of the Semgrep OSS engine and of its C#
+and Python parsers, produced by us from the unmodified Semgrep source tree at tag `v1.81.0`
+(https://github.com/semgrep/semgrep/tree/v1.81.0, released 2024-07-24) with the upstream `js/` build
+tooling (js_of_ocaml 5.7.2, emscripten 3.1.51):
 
-| file | package | version | published |
-|---|---|---|---|
-| `engine-1.17.1-alpha.2.mjs` | `@semgrep/engine` | 1.17.1-alpha.2 | 2023-04-10 |
-| `csharp-1.17.1-alpha.0.mjs` | `@semgrep/languages` (`./csharp`) | 1.17.1-alpha.0 | 2023-04-10 |
-| `python-0.0.4.mjs`, `semgrep-parser.wasm` | `@semgrep/lang-python` | 0.0.4 | 2023-04-23 |
+| file | upstream build target |
+|---|---|
+| `engine-1.81.0.mjs`, `engine-1.81.0.cjs` | `js/engine` (`dist/index.mjs`, `dist/index.cjs`) |
+| `csharp-1.81.0.mjs`, `csharp-1.81.0.cjs`, `csharp-1.81.0.wasm` | `js/languages/csharp` (`dist/index.*`, `dist/semgrep-parser.wasm`) |
+| `python-1.81.0.mjs`, `python-1.81.0.cjs`, `python-1.81.0.wasm` | `js/languages/python` |
 
 Copyright (c) Semgrep, Inc. — licensed under the GNU Lesser General Public License v2.1
-(https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html). The files are used as separately loaded,
-unmodified modules (`docs/js/semgrep-worker.js` imports them with dynamic `import()`); the only
-adaptation is a runtime shim (`docs/js/jsoo-shims.mjs`, MIT) that supplies missing primitives on the
-global `jsoo_runtime` object without changing the files. Corresponding source: the `js/` directory of
-https://github.com/semgrep/semgrep at tag `v1.17.1` / `v1.18.0` (removed from `develop` after v1.81.0)
-and the Semgrep OSS engine at those tags. Checksums: `docs/vendor/semgrep/SHA256SUMS`.
+(https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html). The files are used as separately loaded
+modules (`docs/js/semgrep-worker.js` imports them with dynamic `import()`); no Semgrep source was
+modified. Corresponding source: the tag above plus the build recipe in `scripts/rebuild-engine/`
+(Dockerfile, `build.sh`, `install.sh`), which reproduces the files byte-for-byte modulo toolchain
+nondeterminism. Checksums: `docs/vendor/semgrep/SHA256SUMS`.
 
 Embedded in those bundles: tree-sitter and tree-sitter-c-sharp (MIT), tree-sitter-python (MIT),
-libyaml (MIT), js_of_ocaml runtime (LGPL-2.1 with linking exception), OCaml runtime (LGPL-2.1 with
-linking exception).
+libyaml (MIT), PCRE 8.45 and PCRE2 10.43 (BSD-3-Clause), js_of_ocaml runtime (LGPL-2.1 with linking
+exception), OCaml runtime (LGPL-2.1 with linking exception).
 
 ## 2. Editor bundle (MIT)
 

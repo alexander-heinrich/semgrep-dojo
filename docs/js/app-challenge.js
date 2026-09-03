@@ -68,7 +68,7 @@ function load() {
   if (ch.wasm === 'cli-only') {
     $('run').disabled = true;
     cli.classList.remove('hidden');
-    cli.innerHTML = `<strong>CLI only.</strong> This feature does not work in the 2023 browser engine (see <a href="about.html#engine">About</a>).
+    cli.innerHTML = `<strong>CLI only.</strong> This feature does not work in the browser engine (see <a href="about.html#engine">About</a>).
       Practice it with the real Semgrep CLI:<pre>python3 scripts/check.py challenges/${escapeHtml(ch.id)} --start
 python3 scripts/check.py challenges/${escapeHtml(ch.id)} workspace/${escapeHtml(ch.slug)}/rule.yaml</pre>`;
   } else {
@@ -157,7 +157,8 @@ function showResult(g, res, warnings) {
     out.push(`<details class="matches"><summary>${g.matches.length} raw match${g.matches.length === 1 ? '' : 'es'}</summary>${g.matches.map((m) => {
       const s = m.location.start, e = m.location.end;
       const mv = Object.entries((m.extra && m.extra.metavars) || {}).map(([k, v]) => `<span class="mv"><b>${escapeHtml(k)}</b> = <code>${escapeHtml(v && v.abstract_content !== undefined ? v.abstract_content : JSON.stringify(v))}</code></span>`).join(' ');
-      const fix = m.__renderedFix !== undefined ? `<div class="fix">fix → <code>${escapeHtml(m.__renderedFix)}</code></div>` : '';
+      const rendered = (m.extra && typeof m.extra.fix === 'string') ? m.extra.fix : m.__renderedFix;
+      const fix = rendered !== undefined ? `<div class="fix">fix → <code>${escapeHtml(rendered)}</code></div>` : '';
       return `<div class="match"><span class="ln">${s.line}:${s.col}–${e.line}:${e.col}</span> <span class="message">${escapeHtml((m.extra && m.extra.message) || '')}</span> ${mv}${fix}</div>`;
     }).join('')}</details>`);
   }

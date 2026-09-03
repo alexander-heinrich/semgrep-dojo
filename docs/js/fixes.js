@@ -1,9 +1,10 @@
-// Client-side rendering of `fix:` / `fix-regex:` — the 2023 browser engine does not emit rendered fixes.
-// Shared by the site (rules.js) and scripts/wasm_parity.mjs.
+// Fallback rendering of `fix:` / `fix-regex:`. The engine emits `extra.fix` itself; this fills the preview
+// in for matches where it did not. Shared by the site (rules.js) and the Node scripts.
 export function renderFixes(matches, rules, targetText) {
   const byId = new Map(rules.map((r) => [r.id, r]));
   const lines = targetText.split('\n');
   for (const m of matches) {
+    if (m.extra && typeof m.extra.fix === 'string') continue; // the engine already rendered it
     const id = String(m.rule_id || '');
     const rule = byId.get(id) || [...byId.values()].find((r) => id.endsWith('.' + r.id));
     if (!rule) continue;

@@ -45,4 +45,4 @@ sources:
     url: https://github.com/dotnet/aspnetcore/blob/6fd0a4c337354cff8a0ba9cdc81a8f57e0f010ca/src/Security/samples/Cookies/Controllers/AccountController.cs
     lines: [4, 70]
     modified: true
-    modification_note: "File-scoped namespace (C# 10) turned into a block namespace so the 2023 browser parser accepts it; annotation comments added."
+    modification_note: "File-scoped namespace (C# 10) turned into a block namespace; annotation comments added."

@@ -29,17 +29,15 @@ instructions: |
 hints:
   - "Semgrep parses a pattern with the same grammar as the code. `if (x)` on its own is not a complete statement — but Semgrep's lenient pattern parser can read `if(x)` as an *expression*: a call to a method named `if`. That is what the starter looks for, so it finds nothing."
   - "Give the `if` a body. Inside braces, `...` stands for any sequence of statements, so the body stays unconstrained."
-  - "In current Semgrep `if (string.IsNullOrEmpty($X)) { ... }` is the canonical answer. The 2023 browser engine on this site has a bug with a lone `...` in an `if` body after a call condition — write the body as `{ $S; ... }` (one statement, then anything); both engines accept that."
+  - "`if (string.IsNullOrEmpty($X)) { ... }` is the canonical answer. `{ $S; ... }` (one statement, then anything) would also work, but it additionally demands a non-empty body."
 followup_title: That's it!
 followup: |
-  `if (string.IsNullOrEmpty($X)) { $S; ... }` is a complete statement, so Semgrep compares it with the
+  `if (string.IsNullOrEmpty($X)) { ... }` is a complete statement, so Semgrep compares it with the
   `if` statements in the file: the condition must be a call to `string.IsNullOrEmpty` with one
-  argument, and the body accepts any non-empty statement list — an assignment on line 52, a `return`
-  on line 58. With the real Semgrep CLI the idiomatic body is simply `{ ... }`; the browser engine
-  on this site is a 2023 snapshot that mishandles a lone `...` after a call condition, which is why
-  the site suggests `{ $S; ... }` when you use `{ ... }` here. The other checks have different
-  conditions (`user == null`, `a && b`, the negated `!string.IsNullOrWhiteSpace(...)`), so they
-  are left alone.
+  argument, and the body accepts any statement list — an assignment on line 52, a `return` on
+  line 58. It also matches an `if` without braces, because Semgrep compares statements, not
+  characters. The other checks have different conditions (`user == null`, `a && b`, the negated
+  `!string.IsNullOrWhiteSpace(...)`), so they are left alone.
 
   Two details are worth remembering. The braces in the pattern do not require braces in the code:
   `{ ... }` and one-statement bodies such as `{ $S; }` or `{ return NotFound(); }` also match a
@@ -65,4 +63,4 @@ sources:
     url: https://github.com/OrchardCMS/OrchardCore/blob/7418cecfe38deed1398becb6f3520c4fa7786b6e/src/OrchardCore.Modules/OrchardCore.Users/Controllers/EmailConfirmationController.cs
     lines: [4, 90]
     modified: true
-    modification_note: "File-scoped namespace (C# 10) turned into a block so the 2023 browser parser accepts it; fields, constructor and the ConfirmEmailSent member replaced by `// ... (omitted)`; annotation comments added."
+    modification_note: "File-scoped namespace (C# 10) turned into a block; fields, constructor and the ConfirmEmailSent member replaced by `// ... (omitted)`; annotation comments added."

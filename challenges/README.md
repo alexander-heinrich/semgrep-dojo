@@ -48,11 +48,11 @@ sources:                 # one entry per contiguous window of real-world code in
 
 ### `wasm` flag
 
-The browser runs a 2023 snapshot of the Semgrep engine (see `spike/RESULTS.md`).
+The browser runs a build of the Semgrep engine from tag v1.81.0 (see `spike/RESULTS.md`); as of that build every challenge is `expected`.
 
 - `expected` — the solution grades correctly in the browser; `scripts/wasm_parity.mjs` fails the build if it doesn't.
 - `todo` — known engine gap; parity mismatches are reported as warnings; `// todoruleid:` lines are excluded from browser grading.
-- `cli-only` — the feature cannot run in the browser (regex operators, `metavariable-analysis`, `paths`); the page shows the CLI command instead of Run.
+- `cli-only` — the feature cannot run in the browser; the page shows the CLI command instead of Run (currently unused).
 
 ## Annotations in `target.cs`
 
@@ -82,9 +82,10 @@ The first three lines of `target.cs` are an attribution header:
   taken from a vulnerability-fix commit, cite the **parent** SHA and link the advisory.
 - Keep snippets ≤ ~80 lines, whole methods/classes, with the `using` lines a rule may need.
   Replace removed members with `// ... (omitted)`. Never edit a line that carries an annotation.
-- Avoid C# 11+ syntax (raw strings, list patterns, primary constructors on classes, collection
-  expressions) and interpolated strings on expected lines — the browser parser is from April 2023.
-- Use legacy severities (`ERROR`, `WARNING`, `INFO`) and `languages: [csharp]`.
+- The C# grammar matches Semgrep 1.172's: C# 12 primary constructors, `using X = (int, int)` aliases,
+  `ref readonly` parameters, C# 14 extension members and `a?.b = c` produce partial-parse errors; avoid
+  them on expected lines. `"..."` does not match interpolated strings (same as the CLI).
+- Use `languages: [csharp]`; any Semgrep severity is accepted.
 - The starter must not already pass (unless `intro: true`). Give the learner a real starting point:
   the official tutorial's starters are "almost right".
 - Instructions: 2-4 short paragraphs, one explicit task sentence starting with "Try", "Write" or

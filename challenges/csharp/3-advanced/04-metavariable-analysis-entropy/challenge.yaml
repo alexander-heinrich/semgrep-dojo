@@ -6,7 +6,7 @@ tags: [metavariable-analysis, security, string-literal]
 covers:
   cheatsheet: [argument]
   rule_keys: [metavariable-analysis, patterns]
-wasm: cli-only
+wasm: expected
 instructions: |
   Same four constants as in the `metavariable-regex` challenge, different tool. A regex for "32+ hex
   digits" only finds secrets that happen to be hex. Real secrets come in many shapes; what they have in
@@ -29,9 +29,6 @@ followup: |
   are. `"User"` and `"Administrator"` are ordinary English; `"f449a71c…"` is not. This is how
   Semgrep's generic-secrets rules and many secret scanners work, and it complements name-based and
   format-based checks rather than replacing them.
-
-  Like the regex operators, `metavariable-analysis` cannot run in the browser engine on this site, so
-  this one is verified with the real CLI.
 
   **Try this:** add a fifth constant `public const string Greeting = "hello hello hello";` to the
   target in your local checkout — low entropy, no match. Then paste a real API key or a long

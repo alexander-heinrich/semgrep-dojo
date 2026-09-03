@@ -20,8 +20,7 @@ instructions: |
   the *same* value that is being redirected to.
 hints:
   - "The enclosing code is an `if` statement; write it as a complete statement with a body."
-  - "Reuse `$U`: `if (Url.IsLocalUrl($U)) { $S; ... }` — the guard must test the redirected value, not just any value."
-  - "Body note: current Semgrep accepts `{ ... }`; the browser engine on this site needs `{ $S; ... }` for an if-body after a call condition."
+  - "Reuse `$U`: `if (Url.IsLocalUrl($U)) { ... }` — the guard must test the redirected value, not just any value."
 followup_title: Correct!
 followup: |
   `pattern-not-inside: if (Url.IsLocalUrl($U)) { $S; ... }` removes the aspnetcore match because that

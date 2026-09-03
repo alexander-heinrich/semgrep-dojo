@@ -23,19 +23,15 @@
      rendered fix.</p>
 
   <h2 id="engine">How rules run in the browser</h2>
-  <p>Your rule runs locally on a WebAssembly build of the Semgrep OSS engine that Semgrep published to npm in April 2023
-     (<code>@semgrep/engine@1.17.1-alpha.2</code> with the C# and Python parsers). Nothing is sent to a server. The snapshot is
-     old, so a few features behave differently from current Semgrep:</p>
-  <ul>
-    <li><code>pattern-regex</code>, <code>pattern-not-regex</code>, <code>metavariable-regex</code>, <code>metavariable-analysis</code> and
-        <code>paths</code> do not work — those challenges are marked <em>CLI only</em> and are practiced with
-        <code>scripts/check.py</code> and your installed Semgrep.</li>
-    <li>Severities <code>CRITICAL/HIGH/MEDIUM/LOW</code> are mapped to <code>ERROR/WARNING/INFO</code> before running.</li>
-    <li>Rendered autofixes are computed by the page from your <code>fix:</code> and the metavariable bindings.</li>
-    <li>The C# parser predates C# 11, so targets avoid raw string literals, list patterns, primary constructors and collection expressions.</li>
-  </ul>
-  <p>All challenges are additionally validated against a current Semgrep CLI when the site is built, and a parity script confirms
-     the browser engine agrees for every challenge that is not CLI-only.</p>
+  <p>Your rule runs locally on a WebAssembly build of the Semgrep OSS engine (js_of_ocaml + emscripten), built from the
+     source tree at tag <code>v1.81.0</code> (July 2024) — the last release that still contains the browser build tooling,
+     which Semgrep later moved into its proprietary repository. The C# and Python parsers come from the same build (Python
+     is only needed for <code>metavariable-comparison</code>). Nothing is sent to a server.</p>
+  <p>The build recipe is <code>scripts/rebuild-engine/</code> in the repository. On every probe we ran — the rule-syntax
+     operators, taint mode, autofix and message rendering, and C# 9 to 14 syntax samples — this build behaves exactly like
+     Semgrep 1.172.0; all challenges are validated against a current Semgrep CLI when the site is built, and a parity script
+     confirms the browser engine agrees for every one of them. Two years of newer releases are still missing, so if you find a
+     rule that behaves differently, the CLI result is the reference.</p>
 
   <h2>Practicing from the terminal</h2>
   <pre>git clone https://github.com/alexander-heinrich/learn-semgrep && cd learn-semgrep

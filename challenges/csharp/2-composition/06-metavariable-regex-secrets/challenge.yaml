@@ -6,7 +6,7 @@ tags: [metavariable-regex, security, string-literal]
 covers:
   cheatsheet: [argument]
   rule_keys: [metavariable-regex, patterns]
-wasm: cli-only
+wasm: expected
 instructions: |
   This model class from a deliberately vulnerable API (dvcsharp-api) declares four string
   constants. Three are harmless role names; the fourth is a 64-character hex string used to sign JWTs
@@ -30,9 +30,6 @@ followup: |
   finds nothing here (the text starts with a quote). The end is not anchored — `"[0-9a-f]{32}` would
   match too — so the closing `"$` is what stops a long hex prefix inside a longer literal from
   passing. The leading `^` is redundant but harmless; for a "contains" test, start the regex with `.*`.
-
-  The regex operators are among the few features the browser engine on this site cannot run
-  (it has no regex library), which is why this challenge is checked with the real Semgrep CLI.
 
   **Try this:** run `metavariable-regex` on `$N` instead, with `regex: (?i)secret|token|password` — a
   common way to flag suspicious *names* rather than values. `TokenSecret` is still reported, but only

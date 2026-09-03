@@ -66,7 +66,8 @@ try {
     const v2 = await evaluate(`document.querySelector('#results .verdict').className + ' | ' + document.querySelector('#results .verdict').textContent`);
     check(/pass/.test(v2), `solution passes (${v2.slice(0, 120)})`);
     check(await evaluate(`!document.getElementById('followup').classList.contains('hidden')`), 'follow-up shown');
-    check(await evaluate(`document.querySelectorAll('#target-editor .cm-line-matched').length > 0`), 'matched lines highlighted');
+    // a challenge whose solution must match nothing (e.g. a `paths:` exclude) has no lines to highlight
+    check(await evaluate(`document.querySelectorAll('#target-editor .cm-line-expected').length === 0 || document.querySelectorAll('#target-editor .cm-line-matched').length > 0`), 'matched lines highlighted (or nothing expected)');
     // YAML error path
     await evaluate(`__dojo.ruleEd.set('rules:\\n  - id: x\\n    pattern: [unclosed'); __dojo.run()`);
     await sleep(300);

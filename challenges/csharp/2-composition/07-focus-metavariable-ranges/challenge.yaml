@@ -12,8 +12,7 @@ instructions: |
   finds the call, and this time the *line* is not the problem — the **range** is.
 
   Look at the result after running the starter: the reported range is the whole call
-  `serializer.Deserialize(reader)` — line 50, columns 37 to 67 (the browser engine lists a second
-  range on the same line that also takes in the `(Product[])` cast). Security findings are more
+  `serializer.Deserialize(reader)` — line 50, columns 37 to 67. Security findings are more
   useful when they point at the untrusted *input*, and taint rules (coming up in Level 3) need to
   know which sub-expression carries the data.
 
