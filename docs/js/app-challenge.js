@@ -2,7 +2,8 @@ import { EngineClient } from './engine-client.js';
 import { parseRuleYaml, renderFixes } from './rules.js';
 import { grade } from './grader.js';
 import { annotationLines } from './annotations.js';
-import { createRuleEditor, createTargetEditor, smallScreen } from './editors.js';
+import { createRuleEditor, createTargetEditor, smallScreen, setTheme } from './editors.js';
+import { THEME_CHOICES } from './themes.js';
 import { storage } from './storage.js';
 import { md, escapeHtml } from './markdown.js';
 
@@ -57,7 +58,7 @@ function load() {
   const saved = storage.progress(ch.id);
   const initial = saved.lastRule && saved.status !== 'solved' ? saved.lastRule : ch.starter;
   if (ruleEd) ruleEd.set(initial); else ruleEd = createRuleEditor($('rule-editor'), initial, { onRun: run, onChange: () => { $('rule-messages').innerHTML = ''; } });
-  if (targetEd) { targetEd.view.destroy(); $('target-editor').innerHTML = ''; }
+  if (targetEd) { targetEd.destroy(); $('target-editor').innerHTML = ''; }
   targetEd = createTargetEditor($('target-editor'), ch.target);
   targetEd.showExpectations({ expected: ch.expected.ruleidLines, ok: ch.expected.okLines, todo: ch.wasm === 'todo' ? ch.expected.todoLines : [],
     annotations: annotationLines(ch.target) });
@@ -168,6 +169,12 @@ function showResult(g, res, warnings) {
 }
 
 $('run').addEventListener('click', run);
+// editor colour theme: 'auto' follows the system setting (light, or One Dark in dark mode)
+const themeSel = $('theme');
+themeSel.innerHTML = THEME_CHOICES.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+themeSel.value = storage.setting('theme') || 'auto';
+setTheme(themeSel.value);
+themeSel.addEventListener('change', () => setTheme(storage.setting('theme', themeSel.value)));
 $('reset').addEventListener('click', () => { ruleEd.set(ch.starter); $('rule-messages').innerHTML = ''; $('results').innerHTML = ''; targetEd.clearResult(); ruleEd.focus(); });
 $('show-solution').addEventListener('click', () => {
   if (!confirm('Replace your rule with the reference solution? The challenge will count as solved with help.')) return;

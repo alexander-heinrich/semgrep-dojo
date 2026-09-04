@@ -6,6 +6,7 @@ Built by scripts/vendor.mjs (esbuild) from:
 - @codemirror/language@6.12.4
 - @codemirror/state@6.7.2
 - @codemirror/view@6.43.10
+- @lezer/highlight@1.2.3
 - @replit/codemirror-lang-csharp@6.2.0
 - codemirror@6.0.2
 - js-yaml@4.3.2

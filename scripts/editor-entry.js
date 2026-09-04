@@ -3,6 +3,8 @@
 export { EditorView, basicSetup } from 'codemirror';
 export { EditorState, StateField, StateEffect, RangeSet, RangeSetBuilder, Compartment } from '@codemirror/state';
 export { Decoration, gutter, GutterMarker, keymap, lineNumbers, ViewPlugin } from '@codemirror/view';
+export { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+export { tags } from '@lezer/highlight';
 export { yaml } from '@codemirror/lang-yaml';
 export { csharp } from '@replit/codemirror-lang-csharp';
 export * as jsyaml from 'js-yaml';

@@ -2,24 +2,40 @@
 import { EditorView, basicSetup, EditorState, StateField, StateEffect, Decoration, RangeSetBuilder, keymap, yaml, csharp, Compartment,
   gutter, GutterMarker } from '../vendor/editor.bundle.js';
 
-const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+import { themeExtension } from './themes.js';
 export const smallScreen = () => !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
 
-// Scroll a line to the middle of the editor's own scroller. (EditorView.scrollIntoView also scrolls
-// every ancestor, which on a phone — where the page itself scrolls — yanks the whole page around.)
+// Scroll a line to the middle of the editor. CodeMirror's scrollIntoView effect also scrolls every
+// ancestor — on a phone, where the page itself scrolls, that yanks the page around — so run the
+// measure synchronously and put the window back where it was. (Setting scrollDOM.scrollTop directly
+// is not an option: an editor that is outside the window's viewport ignores it until it scrolls into view.)
 function centerLine(view, lineNumber) {
   const line = view.state.doc.line(Math.min(Math.max(1, lineNumber), view.state.doc.lines));
-  requestAnimationFrame(() => {
-    const block = view.lineBlockAt(line.from), scroller = view.scrollDOM;
-    scroller.scrollTop = Math.max(0, block.top - scroller.clientHeight / 2 + block.height / 2);
+  requestAnimationFrame(() => {   // wait for layout so the editor has its final height
+    const x = window.scrollX, y = window.scrollY;
+    view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: 'center' }) });
+    view.measure();
+    window.scrollTo(x, y);
   });
 }
-const themeExt = EditorView.theme({
+const layoutExt = EditorView.theme({
   '&': { fontSize: '13px', height: '100%' },
   '.cm-scroller': { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', lineHeight: '1.45' },
   '.cm-content': { padding: '6px 0' },
   '&.cm-focused': { outline: 'none' },
-}, { dark });
+});
+
+// ---- colour theme (shared by every editor on the page, switchable at runtime) -------------------
+const colourComp = new Compartment();
+let colourName = 'auto';
+const liveViews = new Set();
+const colourExt = () => colourComp.of(themeExtension(colourName));
+/** Apply a theme ('auto' | 'light' | palette name from themes.js) to every open editor. */
+export function setTheme(name) {
+  colourName = name || 'auto';
+  for (const v of liveViews) v.dispatch({ effects: colourComp.reconfigure(themeExtension(colourName)) });
+}
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (colourName === 'auto') setTheme('auto'); });
 
 // ---- rule editor ---------------------------------------------------------------------------------
 export function createRuleEditor(parent, text, { onRun, onChange } = {}) {
@@ -29,10 +45,11 @@ export function createRuleEditor(parent, text, { onRun, onChange } = {}) {
     parent,
     state: EditorState.create({
       doc: text,
-      extensions: [runKey, basicSetup, yaml(), themeExt, errorLine.of([]), smallScreen() ? EditorView.lineWrapping : [],
+      extensions: [runKey, basicSetup, yaml(), layoutExt, colourExt(), errorLine.of([]), smallScreen() ? EditorView.lineWrapping : [],
         EditorView.updateListener.of((u) => { if (u.docChanged && onChange) onChange(u.state.doc.toString()); })],
     }),
   });
+  liveViews.add(view);
   return {
     view,
     get: () => view.state.doc.toString(),
@@ -95,12 +112,14 @@ export function createTargetEditor(parent, text) {
     parent,
     state: EditorState.create({
       doc: text,
-      extensions: [basicSetup, csharp(), themeExt, EditorState.readOnly.of(true), EditorView.editable.of(false), lineClassField, markersField, dojoGutter,
+      extensions: [basicSetup, csharp(), layoutExt, colourExt(), EditorState.readOnly.of(true), EditorView.editable.of(false), lineClassField, markersField, dojoGutter,
         smallScreen() ? EditorView.lineWrapping : []],
     }),
   });
+  liveViews.add(view);
   return {
     view,
+    destroy() { liveViews.delete(view); view.destroy(); },
     /** expectations: {expected:number[], ok:number[], todo:number[], annotations:number[]} */
     showExpectations({ expected = [], ok = [], todo = [], annotations = [] }) {
       const classes = {}, markers = {};
