@@ -17,6 +17,9 @@ instructions: |
 
   We want only the controller's HTTP endpoints — the `public` methods (four of them, one of which is
   `async`). Change the pattern so that the three `private` helpers no longer match.
+
+  Note where the ▶ markers sit: a method's match *starts at its first attribute* (`[HttpGet]`), because
+  attributes are part of the declaration — the shaded lines below each marker are the rest of the match.
 hints:
   - "Put a modifier in front of `$RET`."
   - "`public $RET $M(...) { ... }` — `async` and the attributes do not need to be mentioned; they are simply allowed."

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-09-04T14:13:03+00:00",
+ "generatedAt": "2026-09-04T19:39:07+00:00",
  "semgrepCliVersion": "1.172.0",
  "engine": {
   "engine": "semgrep v1.81.0 js/engine (Semgrep-WASM build)",
@@ -211,14 +211,17 @@
     "solutionMatches": [
      {
       "line": 21,
+      "endLine": 21,
       "metavars": {}
      },
      {
       "line": 35,
+      "endLine": 36,
       "metavars": {}
      },
      {
       "line": 62,
+      "endLine": 62,
       "metavars": {}
      }
     ],
@@ -330,14 +333,17 @@
     "solutionMatches": [
      {
       "line": 29,
+      "endLine": 29,
       "metavars": {}
      },
      {
       "line": 34,
+      "endLine": 34,
       "metavars": {}
      },
      {
       "line": 39,
+      "endLine": 39,
       "metavars": {}
      }
     ],
@@ -446,10 +452,12 @@
     "solutionMatches": [
      {
       "line": 37,
+      "endLine": 37,
       "metavars": {}
      },
      {
       "line": 63,
+      "endLine": 63,
       "metavars": {}
      }
     ],
@@ -553,6 +561,7 @@
     "solutionMatches": [
      {
       "line": 40,
+      "endLine": 40,
       "metavars": {}
      }
     ],
@@ -688,6 +697,7 @@
     "solutionMatches": [
      {
       "line": 43,
+      "endLine": 43,
       "metavars": {}
      }
     ],
@@ -808,10 +818,12 @@
     "solutionMatches": [
      {
       "line": 20,
+      "endLine": 30,
       "metavars": {}
      },
      {
       "line": 41,
+      "endLine": 51,
       "metavars": {}
      }
     ],
@@ -917,10 +929,12 @@
     "solutionMatches": [
      {
       "line": 35,
+      "endLine": 35,
       "metavars": {}
      },
      {
       "line": 41,
+      "endLine": 41,
       "metavars": {}
      }
     ],
@@ -1030,10 +1044,12 @@
     "solutionMatches": [
      {
       "line": 52,
+      "endLine": 55,
       "metavars": {}
      },
      {
       "line": 58,
+      "endLine": 61,
       "metavars": {}
      }
     ],
@@ -1068,7 +1084,7 @@
    "grade": "lines",
    "wasm": "expected",
    "starter_expects_error": false,
-   "instructions": "A method definition is a pattern too. `$RET $M(...) { ... }` reads as: any return type, any\nmethod name, any parameter list, any body — so it matches **every** method in this ASP.NET Core\nIdentity sample controller, including the private helpers at the bottom.\n\nModifiers work as a *required subset*: whatever modifiers you write in the pattern must be present on\nthe method, and any modifiers you leave out are allowed to be there or not. `static` in a pattern\nexcludes instance methods; leaving `static` out matches both.\n\nWe want only the controller's HTTP endpoints — the `public` methods (four of them, one of which is\n`async`). Change the pattern so that the three `private` helpers no longer match.\n",
+   "instructions": "A method definition is a pattern too. `$RET $M(...) { ... }` reads as: any return type, any\nmethod name, any parameter list, any body — so it matches **every** method in this ASP.NET Core\nIdentity sample controller, including the private helpers at the bottom.\n\nModifiers work as a *required subset*: whatever modifiers you write in the pattern must be present on\nthe method, and any modifiers you leave out are allowed to be there or not. `static` in a pattern\nexcludes instance methods; leaving `static` out matches both.\n\nWe want only the controller's HTTP endpoints — the `public` methods (four of them, one of which is\n`async`). Change the pattern so that the three `private` helpers no longer match.\n\nNote where the ▶ markers sit: a method's match *starts at its first attribute* (`[HttpGet]`), because\nattributes are part of the declaration — the shaded lines below each marker are the rest of the match.\n",
    "hints": [
     "Put a modifier in front of `$RET`.",
     "`public $RET $M(...) { ... }` — `async` and the attributes do not need to be mentioned; they are simply allowed."
@@ -1141,18 +1157,22 @@
     "solutionMatches": [
      {
       "line": 19,
+      "endLine": 25,
       "metavars": {}
      },
      {
       "line": 30,
+      "endLine": 37,
       "metavars": {}
      },
      {
       "line": 44,
+      "endLine": 49,
       "metavars": {}
      },
      {
       "line": 54,
+      "endLine": 59,
       "metavars": {}
      }
     ],
@@ -1267,10 +1287,12 @@
     "solutionMatches": [
      {
       "line": 36,
+      "endLine": 50,
       "metavars": {}
      },
      {
       "line": 78,
+      "endLine": 89,
       "metavars": {}
      }
     ],
@@ -1380,14 +1402,17 @@
     "solutionMatches": [
      {
       "line": 39,
+      "endLine": 39,
       "metavars": {}
      },
      {
       "line": 61,
+      "endLine": 64,
       "metavars": {}
      },
      {
       "line": 82,
+      "endLine": 82,
       "metavars": {}
      }
     ],
@@ -1493,6 +1518,7 @@
     "solutionMatches": [
      {
       "line": 30,
+      "endLine": 30,
       "metavars": {}
      }
     ],
@@ -1605,18 +1631,22 @@
     "solutionMatches": [
      {
       "line": 25,
+      "endLine": 25,
       "metavars": {}
      },
      {
       "line": 29,
+      "endLine": 29,
       "metavars": {}
      },
      {
       "line": 33,
+      "endLine": 33,
       "metavars": {}
      },
      {
       "line": 37,
+      "endLine": 37,
       "metavars": {}
      }
     ],
@@ -1720,22 +1750,27 @@
     "solutionMatches": [
      {
       "line": 23,
+      "endLine": 26,
       "metavars": {}
      },
      {
       "line": 36,
+      "endLine": 38,
       "metavars": {}
      },
      {
       "line": 51,
+      "endLine": 54,
       "metavars": {}
      },
      {
       "line": 67,
+      "endLine": 69,
       "metavars": {}
      },
      {
       "line": 80,
+      "endLine": 80,
       "metavars": {}
      }
     ],
@@ -1851,10 +1886,12 @@
     "solutionMatches": [
      {
       "line": 37,
+      "endLine": 37,
       "metavars": {}
      },
      {
       "line": 42,
+      "endLine": 42,
       "metavars": {}
      }
     ],
@@ -1973,6 +2010,7 @@
     "solutionMatches": [
      {
       "line": 46,
+      "endLine": 46,
       "metavars": {}
      }
     ],
@@ -2112,10 +2150,12 @@
     "solutionMatches": [
      {
       "line": 35,
+      "endLine": 35,
       "metavars": {}
      },
      {
       "line": 70,
+      "endLine": 70,
       "metavars": {}
      }
     ],
@@ -2259,6 +2299,7 @@
     "solutionMatches": [
      {
       "line": 70,
+      "endLine": 70,
       "metavars": {}
      }
     ],
@@ -2363,6 +2404,7 @@
     "solutionMatches": [
      {
       "line": 76,
+      "endLine": 78,
       "metavars": {}
      }
     ],
@@ -2482,6 +2524,7 @@
     "solutionMatches": [
      {
       "line": 24,
+      "endLine": 24,
       "metavars": {}
      }
     ],
@@ -2607,6 +2650,7 @@
     "solutionMatches": [
      {
       "line": 50,
+      "endLine": 50,
       "metavars": {}
      }
     ],
@@ -2741,22 +2785,27 @@
     "solutionMatches": [
      {
       "line": 15,
+      "endLine": 15,
       "metavars": {}
      },
      {
       "line": 19,
+      "endLine": 19,
       "metavars": {}
      },
      {
       "line": 23,
+      "endLine": 23,
       "metavars": {}
      },
      {
       "line": 27,
+      "endLine": 27,
       "metavars": {}
      },
      {
       "line": 34,
+      "endLine": 34,
       "metavars": {}
      }
     ],
@@ -2871,6 +2920,7 @@
     "solutionMatches": [
      {
       "line": 44,
+      "endLine": 50,
       "metavars": {}
      }
     ],
@@ -3094,6 +3144,7 @@
     "solutionMatches": [
      {
       "line": 19,
+      "endLine": 19,
       "metavars": {}
      }
     ],
@@ -3227,10 +3278,12 @@
     "solutionMatches": [
      {
       "line": 20,
+      "endLine": 20,
       "metavars": {}
      },
      {
       "line": 34,
+      "endLine": 34,
       "metavars": {}
      }
     ],
@@ -3381,18 +3434,22 @@
     "solutionMatches": [
      {
       "line": 17,
+      "endLine": 17,
       "metavars": {}
      },
      {
       "line": 17,
+      "endLine": 17,
       "metavars": {}
      },
      {
       "line": 31,
+      "endLine": 31,
       "metavars": {}
      },
      {
       "line": 55,
+      "endLine": 55,
       "metavars": {}
      }
     ],
@@ -3523,6 +3580,7 @@
     "solutionMatches": [
      {
       "line": 32,
+      "endLine": 32,
       "metavars": {}
      }
     ],
@@ -3658,6 +3716,7 @@
     "solutionMatches": [
      {
       "line": 21,
+      "endLine": 21,
       "metavars": {}
      }
     ],
@@ -3789,6 +3848,7 @@
     "solutionMatches": [
      {
       "line": 40,
+      "endLine": 40,
       "metavars": {}
      }
     ],
@@ -3911,6 +3971,7 @@
     "solutionMatches": [
      {
       "line": 24,
+      "endLine": 24,
       "metavars": {}
      }
     ],
@@ -4019,6 +4080,7 @@
     "solutionMatches": [
      {
       "line": 42,
+      "endLine": 42,
       "metavars": {}
      }
     ],
@@ -4132,10 +4194,12 @@
     "solutionMatches": [
      {
       "line": 32,
+      "endLine": 32,
       "metavars": {}
      },
      {
       "line": 45,
+      "endLine": 45,
       "metavars": {}
      }
     ],
@@ -4263,6 +4327,7 @@
     "solutionMatches": [
      {
       "line": 39,
+      "endLine": 39,
       "metavars": {}
      }
     ],
@@ -4429,6 +4494,7 @@
     "solutionMatches": [
      {
       "line": 88,
+      "endLine": 88,
       "metavars": {}
      }
     ],
@@ -4612,6 +4678,7 @@
     "solutionMatches": [
      {
       "line": 24,
+      "endLine": 24,
       "metavars": {}
      }
     ],

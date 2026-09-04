@@ -115,9 +115,11 @@ export function createTargetEditor(parent, text) {
   return {
     view,
     destroy() { liveViews.delete(view); view.destroy(); },
-    /** expectations: {expected:number[], ok:number[], todo:number[], annotations:number[]} */
-    showExpectations({ expected = [], ok = [], todo = [], annotations = [] }) {
+    /** expectations: {expected:number[], ok:number[], todo:number[], annotations:number[], ranges:{line,endLine}[]} */
+    showExpectations({ expected = [], ok = [], todo = [], annotations = [], ranges = [] }) {
       const classes = {}, markers = {};
+      // a match usually spans several lines (a method starts at its first attribute); shade the rest lightly
+      for (const r of ranges) for (let l = r.line + 1; l <= (r.endLine || r.line); l++) classes[l] = 'cm-line-expected-body';
       for (const l of annotations) classes[l] = 'cm-line-annotation';
       for (const l of ok) { classes[l] = 'cm-line-ok'; markers[l] = { symbol: '○', cls: 'ok', title: 'must NOT match' }; }
       for (const l of todo) { classes[l] = 'cm-line-todo'; markers[l] = { symbol: '◌', cls: 'todo', title: 'expected in current Semgrep, known gap in the browser engine' }; }
@@ -129,6 +131,11 @@ export function createTargetEditor(parent, text) {
     showResult(result) {
       const classes = { ...(this._base ? this._base.classes : {}) };
       const markers = { ...(this._base ? this._base.markers : {}) };
+      for (const m of result.matches || []) {
+        const s = m.location ? m.location.start : m.start, e = m.location ? m.location.end : m.end;
+        const cls = result.unexpected.includes(s.line) ? 'cm-line-unexpected-body' : 'cm-line-matched-body';
+        for (let l = s.line + 1; l <= e.line; l++) if (!classes[l] || /-body$/.test(classes[l]) || classes[l] === 'cm-line-expected-body') classes[l] = cls;
+      }
       for (const l of result.matchedLines) {
         const bad = result.unexpected.includes(l);
         classes[l] = bad ? 'cm-line-unexpected' : 'cm-line-matched';

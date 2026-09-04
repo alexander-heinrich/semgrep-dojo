@@ -60,7 +60,7 @@ function load() {
   if (targetEd) { targetEd.destroy(); $('target-editor').innerHTML = ''; }
   targetEd = createTargetEditor($('target-editor'), ch.target);
   targetEd.showExpectations({ expected: ch.expected.ruleidLines, ok: ch.expected.okLines, todo: ch.wasm === 'todo' ? ch.expected.todoLines : [],
-    annotations: annotationLines(ch.target) });
+    annotations: annotationLines(ch.target), ranges: ch.expected.solutionMatches || [] });
   const firstExpected = ch.expected.ruleidLines[0] || ch.expected.okLines[0];
   if (firstExpected) targetEd.scrollToLine(firstExpected);
 

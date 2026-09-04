@@ -2,11 +2,13 @@
   --bg: #f7f7f5; --fg: #1d1f21; --muted: #666; --card: #fff; --line: #e2e2df; --accent: #1f6f43; --accent-fg: #fff;
   --pass: #1e7a3a; --fail: #b3261e; --warn: #8a5a00; --code-bg: #eef0ee;
   --exp: rgba(31,111,67,.14); --ok: rgba(120,120,120,.10); --matched: rgba(31,111,67,.28); --unexp: rgba(179,38,30,.22); --missed: rgba(230,140,0,.28); --todo: rgba(120,120,180,.14);
+  --exp-body: rgba(31,111,67,.05); --matched-body: rgba(31,111,67,.11); --unexp-body: rgba(179,38,30,.08);
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #131416; --fg: #e6e6e3; --muted: #9a9a96; --card: #1c1e21; --line: #2b2e33; --accent: #4cc27a; --accent-fg: #0b1f12;
     --pass: #5fd08a; --fail: #ff7b72; --warn: #e3b341; --code-bg: #24272c;
-    --exp: rgba(76,194,122,.16); --ok: rgba(200,200,200,.08); --matched: rgba(76,194,122,.32); --unexp: rgba(255,123,114,.28); --missed: rgba(227,179,65,.30); --todo: rgba(150,150,220,.18); }
+    --exp: rgba(76,194,122,.16); --ok: rgba(200,200,200,.08); --matched: rgba(76,194,122,.32); --unexp: rgba(255,123,114,.28); --missed: rgba(227,179,65,.30); --todo: rgba(150,150,220,.18);
+    --exp-body: rgba(76,194,122,.06); --matched-body: rgba(76,194,122,.13); --unexp-body: rgba(255,123,114,.10); }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -124,6 +126,9 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
 /* CodeMirror decorations */
 .cm-line-annotation { color: var(--muted); opacity: .75; }
 .cm-line-expected { background: var(--exp); }
+.cm-line-expected-body { background: var(--exp-body); }
+.cm-line-matched-body { background: var(--matched-body); }
+.cm-line-unexpected-body { background: var(--unexp-body); }
 .cm-line-ok { background: var(--ok); }
 .cm-line-todo { background: var(--todo); }
 .cm-line-matched { background: var(--matched); }

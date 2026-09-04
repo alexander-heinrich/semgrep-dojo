@@ -72,6 +72,10 @@ def _start_line(m: dict) -> int:
     return m["location"]["start"]["line"] if "location" in m else m["start"]["line"]
 
 
+def _end_line(m: dict) -> int:
+    return m["location"]["end"]["line"] if "location" in m else m["end"]["line"]
+
+
 def _range_key(m: dict) -> str:
     s = m["location"]["start"] if "location" in m else m["start"]
     e = m["location"]["end"] if "location" in m else m["end"]
@@ -328,8 +332,8 @@ def validate_with_cli(ch: dict, log) -> dict:
         raise ChallengeError(
             "solution.yaml does not match the annotations: matched=%s missed=%s unexpected=%s details=%s otherIds=%s"
             % (g["matchedLines"], g["missed"], g["unexpected"], g["details"], g["otherIds"]))
-    # metavariable bindings of the solution (for the UI's "Show solution" explanation)
-    expected["solutionMatches"] = [{"line": _start_line(m), "metavars": {k: (v.get("abstract_content") if isinstance(v, dict) else v)
+    # the solution's matches: start/end lines (the UI shades the whole range) and metavariable bindings
+    expected["solutionMatches"] = [{"line": _start_line(m), "endLine": _end_line(m), "metavars": {k: (v.get("abstract_content") if isinstance(v, dict) else v)
                                      for k, v in (m.get("extra", {}).get("metavars") or {}).items()}} for m in sol["matches"]]
     if ch["starter_rules"] is not None:
         st = run_semgrep(ch["starter"], ch["target"], ch["target_path"])
