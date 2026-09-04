@@ -10,7 +10,7 @@
 <body>
 <header class="top">
   <div class="brand"><a href="./">🥋 Semgrep Dojo</a></div>
-  <nav><a href="./">Challenges</a><a href="https://github.com/alexander-heinrich/learn-semgrep">GitHub</a></nav>
+  <nav><a href="./">Challenges</a><a href="https://github.com/alexander-heinrich/Semgrep-Dojo">GitHub</a></nav>
 </header>
 <main class="home">
   <h1>About</h1>
@@ -27,7 +27,7 @@
      source tree at tag <code>v1.81.0</code> (July 2024) — the last release that still contains the browser build tooling,
      which Semgrep later moved into its proprietary repository. The C# and Python parsers come from the same build (Python
      is only needed for <code>metavariable-comparison</code>). Nothing is sent to a server.</p>
-  <p>The build recipe is <code>scripts/rebuild-engine/</code> in the repository. For C#, the only language this site runs, the
+  <p>The build, its recipe and its verification suites are in <a href="https://github.com/alexander-heinrich/Semgrep-WASM">Semgrep-WASM</a>. For C#, the only language this site runs, the
      build behaves exactly like Semgrep 1.172.0 on every probe we ran: the rule-syntax operators, taint mode, autofix and
      message rendering, and C# 9 to 14 syntax samples. All challenges are validated against a current Semgrep CLI when the
      site is built, and a parity script confirms the browser engine agrees for every one of them. The rule-syntax half of that
@@ -35,7 +35,7 @@
      missing, so if you find a rule that behaves differently, the CLI result is the reference.</p>
 
   <h2>Practicing from the terminal</h2>
-  <pre>git clone https://github.com/alexander-heinrich/learn-semgrep && cd learn-semgrep
+  <pre>git clone https://github.com/alexander-heinrich/Semgrep-Dojo && cd Semgrep-Dojo
 python3 scripts/check.py challenges/csharp/1-basics/04-metavariables --start
 $EDITOR workspace/04-metavariables/rule.yaml
 python3 scripts/check.py challenges/csharp/1-basics/04-metavariables workspace/04-metavariables/rule.yaml</pre>
@@ -43,12 +43,12 @@ python3 scripts/check.py challenges/csharp/1-basics/04-metavariables workspace/0
   <h2>Licences and attribution</h2>
   <p>The site code is MIT-licensed. The Semgrep engine and parsers are LGPL-2.1 and are used as unmodified, separately loaded
      modules. Every target snippet is attributed to its project, file, commit and licence on the challenge page and in
-     <a href="https://github.com/alexander-heinrich/learn-semgrep/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.
+     <a href="https://github.com/alexander-heinrich/Semgrep-Dojo/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.
      Only permissively licensed projects (MIT, Apache-2.0, BSD) are used. If you own code that appears here and want it removed
      or attributed differently, open an issue.</p>
   <p class="disclaimer">Not affiliated with, sponsored by, or endorsed by Semgrep, Inc. "Semgrep" is a trademark of
      Semgrep, Inc. and is used here only to refer to their software. The vendored engine is LGPL-2.1 and unmodified;
-     see <a href="https://github.com/alexander-heinrich/learn-semgrep/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
+     see <a href="https://github.com/alexander-heinrich/Semgrep-Dojo/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
 </main>
 </body>
 </html>

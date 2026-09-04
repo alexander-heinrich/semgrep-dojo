@@ -1,8 +1,8 @@
 {
-  "name": "learn-semgrep",
+  "name": "semgrep-dojo",
   "version": "0.1.0",
   "private": true,
-  "description": "Semgrep Dojo — static C# rule-writing practice site (GitHub Pages)",
+  "description": "Semgrep Dojo \u2014 static C# rule-writing practice site (GitHub Pages)",
   "type": "module",
   "scripts": {
     "vendor": "node scripts/vendor.mjs",
@@ -20,5 +20,6 @@
     "esbuild": "^0.25.0",
     "js-yaml": "^4.1.0",
     "marked": "^15.0.0"
-  }
+  },
+  "repository": "github:alexander-heinrich/Semgrep-Dojo"
 }

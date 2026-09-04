@@ -7,12 +7,15 @@
 // To run a single rule against a single file, use scripts/run_rule.mjs instead.
 //
 // Uses the CommonJS builds vendored next to the browser builds in docs/vendor/semgrep/ (same engine,
-// same parsers, rebuilt from semgrep tag v1.81.0 by scripts/rebuild-engine/).
+// same parsers, rebuilt from semgrep tag v1.81.0 by the Semgrep-WASM repository, whose dist/ that directory is).
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { grade } from '../docs/js/grader.js';
 import { renderFixes } from '../docs/js/fixes.js';
-import { loadEngine, ROOT as root } from './lib/engine-node.mjs';
+import { fileURLToPath } from 'node:url';
+import { loadEngine } from '../docs/vendor/semgrep/engine-node.mjs';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const args = process.argv.slice(2);
 const argValue = (name) => (args.find((a) => a.startsWith(`${name}=`)) || '').slice(name.length + 1) || (args.includes(name) ? args[args.indexOf(name) + 1] : '');

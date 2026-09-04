@@ -57,7 +57,7 @@ export class EngineClient {
       this._emit({ progress: 1 });
       await new Promise((resolve, reject) => {
         try {
-          this.worker = new Worker(new URL('./semgrep-worker.js', import.meta.url), { type: 'module' });
+          this.worker = new Worker(new URL('../vendor/semgrep/semgrep-worker.js', import.meta.url), { type: 'module' });
         } catch (e) {
           this.status = 'fatal';
           this._emit({ message: 'cannot start worker: ' + String(e.message || e) });

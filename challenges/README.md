@@ -48,7 +48,7 @@ sources:                 # one entry per contiguous window of real-world code in
 
 ### `wasm` flag
 
-The browser runs a build of the Semgrep engine from tag v1.81.0 (see `spike/RESULTS.md`); as of that build every challenge is `expected`.
+The browser runs a build of the Semgrep engine from tag v1.81.0 (see the Semgrep-WASM repository); as of that build every challenge is `expected`.
 
 - `expected` — the solution grades correctly in the browser; `scripts/wasm_parity.mjs` fails the build if it doesn't.
 - `todo` — known engine gap; parity mismatches are reported as warnings; `// todoruleid:` lines are excluded from browser grading.

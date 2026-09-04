@@ -458,7 +458,7 @@ def main(argv=None) -> int:
         "version": 1,
         "generatedAt": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
         "semgrepCliVersion": ver,
-        "engine": {"engine": "semgrep v1.81.0 js/engine (own build, scripts/rebuild-engine)", "csharp": "semgrep v1.81.0 js/languages/csharp",
+        "engine": {"engine": "semgrep v1.81.0 js/engine (Semgrep-WASM build)", "csharp": "semgrep v1.81.0 js/languages/csharp",
                    "python": "semgrep v1.81.0 js/languages/python"},
         "levels": [{"level": n, "name": LEVEL_NAMES[n], "dir": d} for d, n in sorted(LEVEL_DIRS.items(), key=lambda x: x[1])],
         "coverage": {"cheatsheet": coverage.CHEATSHEET, "optionalCheatsheet": sorted(coverage.OPTIONAL_CHEATSHEET),

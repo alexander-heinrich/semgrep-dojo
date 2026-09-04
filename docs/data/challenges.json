@@ -1,9 +1,9 @@
 {
  "version": 1,
- "generatedAt": "2026-09-03T15:06:19+00:00",
+ "generatedAt": "2026-09-04T06:45:23+00:00",
  "semgrepCliVersion": "1.172.0",
  "engine": {
-  "engine": "semgrep v1.81.0 js/engine (own build, scripts/rebuild-engine)",
+  "engine": "semgrep v1.81.0 js/engine (Semgrep-WASM build)",
   "csharp": "semgrep v1.81.0 js/languages/csharp",
   "python": "semgrep v1.81.0 js/languages/python"
  },

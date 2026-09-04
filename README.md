@@ -6,7 +6,7 @@ A static site (GitHub Pages) plus a CLI checker for learning the
 [semgrep.dev/learn](https://semgrep.dev/learn) tutorial does — but with new challenges, three
 difficulty levels, and target code taken from real open-source .NET projects.
 
-Live site: https://alexander-heinrich.github.io/learn-semgrep/
+Live site: https://alexander-heinrich.github.io/Semgrep-Dojo/
 
 Your rule runs **in the browser** on a WebAssembly build of the Semgrep OSS engine; nothing is sent
 anywhere. Grading works like `semgrep --test`: the set of matched start lines must equal the set of
@@ -42,15 +42,12 @@ on your `PATH`.
 | `scripts/build.py` | validates every challenge with the local Semgrep CLI and writes `docs/data/challenges.json` + the attribution block of `THIRD_PARTY_NOTICES.md` |
 | `scripts/check.py` | terminal practice (above) |
 | `scripts/wasm_parity.mjs` | runs every solution through the browser engine (Node build) and compares with the CLI result |
-| `scripts/semantics_check.mjs` | 67 pattern-semantics checks with stored expectations, run against the browser engine |
-| `scripts/engine_probes.py` | 60 differential probes comparing the browser engine, Semgrep and Opengrep on the same rules |
 | `scripts/network_check.mjs` | records every request a rule run makes and fails if any leaves the local origin |
 | `scripts/browser-test.mjs` | end-to-end check in headless Chrome over the DevTools protocol |
 | `scripts/fetch_snippet.py` | fetches a file from GitHub at a pinned commit and prints attribution blocks for authoring |
-| `scripts/rebuild-engine/` | Dockerfile + scripts that rebuild the browser engine from the Semgrep source tree (see below) |
+| `scripts/update_engine.sh` | refreshes the vendored engine from a checkout of Semgrep-WASM |
 | `scripts/vendor.mjs` | rebuild the CodeMirror editor bundle |
 | `docs/` | the static site (served by GitHub Pages from `main` / `docs`) |
-| `spike/` | the feasibility spike for running Semgrep in the browser — read `spike/RESULTS.md` |
 
 ## Building and testing
 
@@ -58,8 +55,6 @@ on your `PATH`.
 npm install                      # only for scripts/vendor.mjs and wasm_parity (js-yaml for ad-hoc runs)
 python3 scripts/build.py         # validate all challenges, emit docs/data/challenges.json
 node scripts/wasm_parity.mjs     # browser-engine parity for every challenge
-node scripts/semantics_check.mjs # 67 pattern-semantics checks against the browser engine
-python3 scripts/engine_probes.py # 60 probes: browser engine vs semgrep vs opengrep
 node scripts/network_check.mjs   # confirms a rule run makes no external requests
 node scripts/browser-test.mjs --all   # headless Chrome end-to-end (needs Google Chrome installed)
 sh scripts/serve.sh              # http://127.0.0.1:8000/
@@ -77,29 +72,23 @@ write a starter that is a plausible near-miss, validate with
 
 ## The browser engine
 
-The site runs a WebAssembly build of the Semgrep OSS engine (js_of_ocaml + emscripten) that we build
-ourselves from the Semgrep source tree at tag `v1.81.0` (July 2024), the last release that still
-contains the `js/` build tooling — Semgrep moved it into its proprietary repository right after, and the
-npm packages it once published stopped in April 2023. The C# and Python parsers (`metavariable-comparison`
-parses its expression as Python) come from the same build.
+The site runs a WebAssembly build of the Semgrep OSS engine (js_of_ocaml + emscripten) built from the
+Semgrep source tree at tag `v1.81.0` (July 2024), the last release that still contains the browser
+build tooling. The build, its reproducible Docker recipe, the loaders and the suites that show it agreeing
+with the current Semgrep release live in a separate repository:
+**https://github.com/alexander-heinrich/Semgrep-WASM**. `docs/vendor/semgrep/` is a verbatim copy of its
+`dist/` (engine, parsers, the worker and Node loader, licence, checksums); `sh scripts/update_engine.sh`
+refreshes it from a sibling checkout, verifies the checksums and records the source revision in
+`docs/vendor/semgrep/SOURCE`.
 
-```sh
-sh scripts/rebuild-engine/build.sh     # Docker: OCaml 4.14 stage, then emscripten 3.1.51 stage → scripts/rebuild-engine/out/
-sh scripts/rebuild-engine/install.sh   # copy into docs/vendor/semgrep/ under versioned names, refresh SHA256SUMS
-```
-
-The build pins the opam repository to a snapshot from the release day and takes about 15 minutes on an
-Apple-silicon Mac with Colima (the emscripten stage runs under Rosetta). Everything is LGPL-2.1 and
-unmodified; see `THIRD_PARTY_NOTICES.md`. `scripts/semantics_check.mjs`, `scripts/wasm_parity.mjs` and
-the probes recorded in `spike/RESULTS.md` show this build agreeing with Semgrep 1.172.0 on every check, all of
-them on C#, the only language the site runs (the parser half of that evidence does not transfer to other languages);
-the same challenges also pass unchanged on Opengrep 1.29.0.
+Every check in that repository runs on C#, the only language the site exposes; the same challenges also
+pass unchanged on Opengrep 1.29.0. Everything is LGPL-2.1 and unmodified; see `THIRD_PARTY_NOTICES.md`.
 
 ## License
 
 Site code and prose: MIT. The vendored Semgrep engine and parsers are LGPL-2.1, used unmodified and
 loaded as separate modules; `THIRD_PARTY_NOTICES.md` records the obligations and how they are met, and
-`scripts/rebuild-engine/` is the corresponding build recipe. Challenge target code keeps its upstream
+the Semgrep-WASM repository holds the corresponding build recipe. Challenge target code keeps its upstream
 licence and attribution.
 
 Not affiliated with, sponsored by, or endorsed by Semgrep, Inc. "Semgrep" is a trademark of Semgrep, Inc.

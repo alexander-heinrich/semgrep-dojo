@@ -6,7 +6,8 @@ following third-party components.
 ## 1. Semgrep engine and parsers (LGPL-2.1)
 
 `docs/vendor/semgrep/` contains a WebAssembly/JavaScript build of the Semgrep OSS engine and of its C#
-and Python parsers, produced by us from the unmodified Semgrep source tree at tag `v1.81.0`
+and Python parsers, copied from https://github.com/alexander-heinrich/Semgrep-WASM, which produces it
+from the unmodified Semgrep source tree at tag `v1.81.0`
 (https://github.com/semgrep/semgrep/tree/v1.81.0, released 2024-07-24) with the upstream `js/` build
 tooling (js_of_ocaml 5.7.2, emscripten 3.1.51):
 
@@ -20,13 +21,14 @@ Copyright (c) Semgrep, Inc. — licensed under the GNU Lesser General Public Lic
 licence text is in `docs/vendor/semgrep/LICENSE`, as published with the source at that tag.
 
 How this distribution meets the licence: no Semgrep source was modified; the files are used as
-separately loaded modules (`docs/js/semgrep-worker.js` imports them with dynamic `import()`), so the
+separately loaded modules (`docs/vendor/semgrep/semgrep-worker.js` imports them with dynamic `import()`), so the
 site's own MIT-licensed code is a work that uses the library rather than a derivative of it; the
-corresponding source is the tag named above together with the complete build recipe in
-`scripts/rebuild-engine/` (Dockerfile, `build.sh`, `install.sh`), which lets anyone rebuild or replace
-the library with a modified version; and `docs/vendor/semgrep/SHA256SUMS` identifies exactly what is
-shipped. `docs/vendor/semgrep/VERSIONS.md` and `scripts/rebuild-engine/README.md` record the provenance
-and the build environment.
+corresponding source is the tag named above together with the complete build recipe in the
+Semgrep-WASM repository (`build/`: Dockerfile, `build.sh`, `install.sh`), which lets anyone rebuild or
+replace the library with a modified version; and `docs/vendor/semgrep/SHA256SUMS` identifies exactly
+what is shipped. `docs/vendor/semgrep/` is a verbatim copy of that repository's `dist/`;
+`docs/vendor/semgrep/VERSIONS.md` records the provenance and `docs/vendor/semgrep/SOURCE` the exact
+Semgrep-WASM revision it was copied from.
 
 This project is not affiliated with, sponsored by, or endorsed by Semgrep, Inc. "Semgrep" is a trademark
 of Semgrep, Inc. and is used here only to refer to their software.
