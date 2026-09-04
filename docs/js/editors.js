@@ -3,6 +3,17 @@ import { EditorView, basicSetup, EditorState, StateField, StateEffect, Decoratio
   gutter, GutterMarker } from '../vendor/editor.bundle.js';
 
 const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+export const smallScreen = () => !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
+
+// Scroll a line to the middle of the editor's own scroller. (EditorView.scrollIntoView also scrolls
+// every ancestor, which on a phone — where the page itself scrolls — yanks the whole page around.)
+function centerLine(view, lineNumber) {
+  const line = view.state.doc.line(Math.min(Math.max(1, lineNumber), view.state.doc.lines));
+  requestAnimationFrame(() => {
+    const block = view.lineBlockAt(line.from), scroller = view.scrollDOM;
+    scroller.scrollTop = Math.max(0, block.top - scroller.clientHeight / 2 + block.height / 2);
+  });
+}
 const themeExt = EditorView.theme({
   '&': { fontSize: '13px', height: '100%' },
   '.cm-scroller': { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', lineHeight: '1.45' },
@@ -18,7 +29,7 @@ export function createRuleEditor(parent, text, { onRun, onChange } = {}) {
     parent,
     state: EditorState.create({
       doc: text,
-      extensions: [runKey, basicSetup, yaml(), themeExt, errorLine.of([]),
+      extensions: [runKey, basicSetup, yaml(), themeExt, errorLine.of([]), smallScreen() ? EditorView.lineWrapping : [],
         EditorView.updateListener.of((u) => { if (u.docChanged && onChange) onChange(u.state.doc.toString()); })],
     }),
   });
@@ -28,10 +39,7 @@ export function createRuleEditor(parent, text, { onRun, onChange } = {}) {
     set: (t) => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: t } }),
     markError(line) {
       view.dispatch({ effects: errorLine.reconfigure(line ? lineHighlight(view, line, 'cm-line-error') : []) });
-      if (line) {
-        const l = view.state.doc.line(Math.min(line, view.state.doc.lines));
-        view.dispatch({ effects: EditorView.scrollIntoView(l.from, { y: 'center' }) });
-      }
+      if (line) centerLine(view, line);
     },
     focus: () => view.focus(),
   };
@@ -115,13 +123,9 @@ export function createTargetEditor(parent, text) {
       for (const l of result.missed) { classes[l] = 'cm-line-missed'; markers[l] = { symbol: '▷', cls: 'missed', title: 'expected but not matched' }; }
       view.dispatch({ effects: [setLineClasses.of(classes), setMarkers.of(markers)] });
       const first = result.missed[0] || result.unexpected[0] || result.matchedLines[0];
-      if (first) view.dispatch({ effects: EditorView.scrollIntoView(view.state.doc.line(Math.min(first, view.state.doc.lines)).from, { y: 'center' }) });
+      if (first) centerLine(view, first);
     },
     clearResult() { if (this._base) view.dispatch({ effects: [setLineClasses.of(this._base.classes), setMarkers.of(this._base.markers)] }); },
-    scrollToLine(n) {
-      const line = view.state.doc.line(Math.min(Math.max(1, n), view.state.doc.lines));
-      // wait for layout so the editor has its final height before scrolling
-      requestAnimationFrame(() => view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: 'center' }) }));
-    },
+    scrollToLine(n) { centerLine(view, n); },
   };
 }

@@ -10,6 +10,7 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 a { color: var(--accent); }
 code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; }
@@ -82,7 +83,8 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
 .cli { margin-top: 1rem; padding: .7rem .9rem; border: 1px solid var(--warn); border-radius: 8px; font-size: .9rem; }
 .cli pre { margin: .5em 0 0; }
 .attribution { margin-top: 1.5rem; padding-top: .8rem; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); }
-.attr-title { text-transform: uppercase; letter-spacing: .05em; font-size: .72rem; margin-bottom: .3em; }
+.attr-title { text-transform: uppercase; letter-spacing: .05em; font-size: .72rem; margin-bottom: .3em; cursor: pointer; }
+.attribution details:not([open]) .attr-title { margin-bottom: 0; }
 .editors { display: flex; flex-direction: column; gap: 0; }
 .editor-block { display: flex; flex-direction: column; min-height: 0; border-bottom: 1px solid var(--line); }
 .editor-block.rule { flex: 0 0 auto; height: 38%; min-height: 180px; }
@@ -90,7 +92,8 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
 .toolbar { display: flex; align-items: center; gap: .5rem; padding: .35rem .8rem; background: var(--card); border-bottom: 1px solid var(--line); font-size: .85rem; }
 .toolbar .label { color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
 .toolbar .spacer { flex: 1; }
-.toolbar .legend { color: var(--muted); font-size: .78rem; display: flex; gap: .6rem; align-items: center; }
+.toolbar .legend { color: var(--muted); font-size: .78rem; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+.toolbar .legend-item { white-space: nowrap; }
 .editor { flex: 1; min-height: 0; overflow: hidden; }
 .editor .cm-editor { height: 100%; }
 .messages:empty { display: none; }
@@ -109,6 +112,8 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
 .bucket.missed .bucket-title { color: var(--warn); }
 .bucket.unexpected .bucket-title { color: var(--fail); }
 .line { display: flex; gap: .6rem; align-items: baseline; padding: .1em 0; }
+.line code { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.line .note { flex: 0 1 auto; }
 .line .ln, .match .ln { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: .8rem; min-width: 3.5em; }
 .line .note { color: var(--muted); font-size: .8rem; }
 .matches summary { cursor: pointer; color: var(--muted); font-size: .85rem; }
@@ -135,12 +140,31 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
 .dojo-marker.missed { color: var(--warn); }
 
 @media (max-width: 900px) {
+  /* header: brand + pager on one row; the breadcrumb repeats the title shown right below, so drop it */
+  .top { gap: .6rem; padding: .5rem .8rem; }
+  .top .brand a { white-space: nowrap; }
+  .top .brand .sub, .top .crumbs { display: none; }
+  .top nav { gap: .7rem; }
+  .top nav a { white-space: nowrap; }
+  .pill { white-space: nowrap; }
+  button { padding: .5em 1em; }
+  /* home list: status icon in a narrow column, title / dots / tags stacked beside it */
+  ol.challenges li { display: grid; grid-template-columns: auto 1fr; column-gap: .6rem; row-gap: .25rem; align-items: baseline; }
+  ol.challenges li .dots, ol.challenges li .tags, ol.challenges li .badge { grid-column: 2; }
+  /* challenge page: one column that scrolls as a page */
   body.challenge-page { height: auto; }
   .workspace { grid-template-columns: 1fr; }
-  .instructions { border-right: none; border-bottom: 1px solid var(--line); max-height: none; }
-  .editor-block.rule { height: 260px; }
-  .editor-block.target { height: 420px; }
-  .top .brand .sub { display: none; }
+  .instructions { border-right: none; border-bottom: 1px solid var(--line); max-height: none; padding: .8rem 1rem 1.2rem; }
+  .instructions h1 { font-size: 1.25rem; }
+  .editor-block.rule { height: 280px; }
+  .editor-block.target { height: min(480px, 60vh); order: 2; }
+  /* the verdict goes between the rule and the target instead of below a full-height editor */
+  .results { order: 1; max-height: none; border-bottom: 1px solid var(--line); }
+  /* 16px stops iOS Safari zooming the page when the editor gets focus; the read-only target can stay smaller */
+  .editor-block.rule .cm-editor { font-size: 16px; }
+  .editor-block.target .cm-editor { font-size: 14px; }
+  .toolbar { flex-wrap: wrap; row-gap: .2rem; }
+  .toolbar .legend { flex-basis: 100%; }
 }
 
 .disclaimer { color: var(--muted, #667); font-size: 0.9em; }

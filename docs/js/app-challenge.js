@@ -2,7 +2,7 @@ import { EngineClient } from './engine-client.js';
 import { parseRuleYaml, renderFixes } from './rules.js';
 import { grade } from './grader.js';
 import { annotationLines } from './annotations.js';
-import { createRuleEditor, createTargetEditor } from './editors.js';
+import { createRuleEditor, createTargetEditor, smallScreen } from './editors.js';
 import { storage } from './storage.js';
 import { md, escapeHtml } from './markdown.js';
 
@@ -88,9 +88,10 @@ function renderHints() {
   if (b) b.addEventListener('click', () => { hintsShown++; storage.usedHelp(ch.id); renderHints(); });
 }
 function renderAttribution() {
-  $('attribution').innerHTML = '<div class="attr-title">Target code</div>' + ch.sources.map((s) =>
+  // on a phone the attribution sits between the instructions and the editors, so keep it folded there
+  $('attribution').innerHTML = `<details${smallScreen() ? '' : ' open'}><summary class="attr-title">Target code</summary>` + ch.sources.map((s) =>
     `<div class="attr"><a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.repo)}</a> — <code>${escapeHtml(s.path)}</code> @ <code>${escapeHtml(String(s.commit).slice(0, 10))}</code>
-     · ${escapeHtml(s.license)}${s.copyright ? ' · © ' + escapeHtml(s.copyright) : ''}${s.modified ? ` · <em>modified</em>${s.modification_note ? ': ' + escapeHtml(s.modification_note) : ''}` : ' · unmodified'}</div>`).join('');
+     · ${escapeHtml(s.license)}${s.copyright ? ' · © ' + escapeHtml(s.copyright) : ''}${s.modified ? ` · <em>modified</em>${s.modification_note ? ': ' + escapeHtml(s.modification_note) : ''}` : ' · unmodified'}</div>`).join('') + '</details>';
 }
 
 let running = false;
@@ -115,6 +116,7 @@ async function run() {
     const g = grade(res, ch.expected, { wasm: ch.wasm });
     storage.attempt(ch.id, text);
     showResult(g, res, parsed.warnings);
+    if (smallScreen() && g.status !== 'pass') $('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     if (g.status === 'pass') {
       storage.solved(ch.id, solutionShown, text);
       $('followup').classList.remove('hidden');
