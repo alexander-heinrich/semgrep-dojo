@@ -1,0 +1,7 @@
+rules:
+  - id: regex-repeated-group
+    message: this regex repeats a group — check it for catastrophic backtracking
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern: new Regex("...")

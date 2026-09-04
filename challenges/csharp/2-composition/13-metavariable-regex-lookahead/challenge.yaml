@@ -1,0 +1,54 @@
+title: metavariable-regex with a lookahead — "anything but https"
+level: 2
+difficulty: 4
+rule_id: insecure-cors-origin
+tags: [metavariable-regex, regex-lookahead, case-insensitive, string-literal, security]
+covers:
+  cheatsheet: [wildcard-arguments, argument]
+  rule_keys: [metavariable-regex, pattern-either, patterns]
+wasm: expected
+instructions: |
+  These ASP.NET Core tests register CORS origins through `new CorsPolicyBuilder(...)` and
+  `builder.WithOrigins(...)`. We want every origin *literal* that is not an `https://` URL —
+  `http://example.com`, `http://*.example.com` and friends — while `"HTTPS://example2.com"` is
+  fine: schemes are case-insensitive, and the builder normalises it.
+
+  Saying "not https" in a regex calls for a **negative lookahead**, `(?!...)`. The starter uses
+  one — and reports far too much: `new CorsPolicyBuilder(originalPolicy)` and
+  `builder.WithOrigins(args)` are flagged although they pass no literal at all. Remember two
+  things about `metavariable-regex`: it sees the *source text* of the binding, quotes included,
+  and it is left-anchored — the regex is tried only at the start of that text.
+
+  Change the regex so that only string literals whose scheme is not `https://` match, in any
+  letter case.
+hints:
+  - "A lookahead consumes nothing, so `(?!\"https://)` succeeds at the start of *every* binding that does not begin with `\"https://` — including plain identifiers. Require the opening quote first, then look ahead."
+  - "`regex: '(?i)\"(?!https://)'` — the `\"` restricts the match to literals, the lookahead excludes the secure ones, `(?i)` makes it case-insensitive."
+followup_title: Correct!
+followup: |
+  Read the regex from the left: `(?i)` switches on case-insensitivity for everything that follows;
+  `"` must be the first character of the binding (left-anchoring does the rest — no `^` needed), so
+  `originalPolicy` and `args` are out; `(?!https://)` then peeks at the text after the quote
+  without consuming it and fails for `"HTTPS://example2.com"`. A lookahead is the idiomatic way
+  to say "does not start with" inside a single regex; the alternative is a positive pattern such as
+  `"http://` — shorter, but silent about `ftp://`, `ws://` or a scheme-less `"example.com"`.
+
+  Notice what the starter got wrong twice on the same line: `new CorsPolicyBuilder("http://www.EXAMPLE.com", "HTTPS://example2.com")`
+  was reported for *both* arguments, because the case-sensitive `(?!"https://)` let `"HTTPS://`
+  through. Grading is by line, so that bug only shows in the number of findings — add `$ORIGIN`
+  to the message and count them.
+
+  **Try this:** the `Assert.Equal(new List<string>() { "http://example.com", ... })` lines contain
+  the same literals and are never reported — the syntax patterns decide *where* to look, the regex
+  only decides *what* is acceptable. Replace the whole rule with `pattern-regex: '"http://'` and
+  watch the assertions and `IsOriginAllowed(...)` calls light up too.
+sources:
+  - repo: dotnet/aspnetcore
+    path: src/Middleware/CORS/test/UnitTests/CorsPolicyBuilderTests.cs
+    commit: c85baf8db0c72ae8e68643029d514b2e737c9fae
+    license: MIT
+    copyright: ".NET Foundation and Contributors"
+    url: https://github.com/dotnet/aspnetcore/blob/c85baf8db0c72ae8e68643029d514b2e737c9fae/src/Middleware/CORS/test/UnitTests/CorsPolicyBuilderTests.cs
+    lines: [4, 67]
+    modified: true
+    modification_note: "Four of the test methods kept (original lines 4-7, 110-146 and 189-201), the rest replaced by `// ... (omitted)`; annotation comments added."

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-09-04T06:45:23+00:00",
+ "generatedAt": "2026-09-04T14:13:03+00:00",
  "semgrepCliVersion": "1.172.0",
  "engine": {
   "engine": "semgrep v1.81.0 js/engine (Semgrep-WASM build)",
@@ -2981,6 +2981,426 @@
      39,
      61,
      82
+    ]
+   }
+  },
+  {
+   "id": "csharp/2-composition/11-pattern-regex-inside-pattern",
+   "lang": "csharp",
+   "level": 2,
+   "level_name": "Composition",
+   "order": 11,
+   "slug": "pattern-regex-inside-pattern",
+   "title": "pattern-regex inside a syntax match — look into a string literal",
+   "difficulty": 3,
+   "intro": false,
+   "rule_id": "regex-repeated-group",
+   "target_path": "target.cs",
+   "tags": [
+    "pattern-regex",
+    "string-literal",
+    "regex-escaping",
+    "security"
+   ],
+   "covers": {
+    "cheatsheet": [
+     "wildcard-strings"
+    ],
+    "rule_keys": [
+     "pattern-regex",
+     "pattern",
+     "patterns"
+    ]
+   },
+   "grade": "lines",
+   "wasm": "expected",
+   "starter_expects_error": false,
+   "instructions": "RestSharp keeps a dozen regular expressions in `static readonly Regex` fields. One of them,\n`NewDateRegex`, was [CVE-2021-27293](https://github.com/advisories/GHSA-9pq7-rcxv-47vq): the\ngroup `(-?\\d+)*` repeats a group that can itself repeat, so a hostile server response makes the\nmatcher backtrack for a very long time (ReDoS). We want to find regex literals that quantify a\nwhole group with `*` or `+` — the text `)*` or `)+`.\n\nA syntax pattern cannot help here: `\"...\"` matches a *whole* string literal and has no way to\nlook at the characters inside it. `pattern-regex` can, because it works on the source text.\nThe starter's `pattern: new Regex(\"...\")` matches all twelve fields; combine it with a\n`pattern-regex` so that only the constructor call whose literal contains `)*` or `)+` remains.\n\nWrite the `pattern-regex` entry. Remember that `)` is a regex metacharacter, so it needs a\nbackslash — and put the regex in single quotes so YAML leaves the backslash alone.\n",
+   "hints": [
+    "Add a second entry under `patterns:`, `- pattern-regex: '...'`. Under `patterns:` the regex hit must lie inside the range of the syntax match, so the regex is effectively searched *within* each `new Regex(\"...\")` call.",
+    "`pattern-regex: '\\)[*+]'` — an escaped closing parenthesis followed by a star or a plus."
+   ],
+   "followup_title": "Correct!",
+   "followup": "Under `patterns:`, a `pattern-regex` entry is ANDed with the syntax pattern by *range*: the regex\nhit has to fall inside a range that `pattern: new Regex(\"...\")` matched, so the eleven other\nfields drop out even though they are perfectly good `new Regex(...)` calls. The finding is\nreported at the regex hit — the inner of the two ranges. Note that `\"...\"` happily matched the\nverbatim literal `@\"newDate\\((-?\\d+)*\\)\"`: the `@` prefix is part of the literal token, and the\nregex saw the raw text with its backslashes exactly as written in the file.\n\nThis is a rough heuristic — `([A-Z]+)` is harmless because the `+` is *inside* the group — but it\nfound the real CVE. The exact tool for the job is `metavariable-analysis` with `analyzer: redos`,\nwhich parses the captured regex and reports only patterns with exponential worst-case behaviour.\n\n**Try this:** swap the regex for `'\\{\\d+\\}'` to find bounded repetitions such as `{4}` (one\nfield), then for `'\\)\\?'` (which field has an optional group?). Finally delete the\n`pattern:` line and run the regex on its own: same result in this file — until someone adds a\ncomment that mentions `)*`.\n",
+   "sources": [
+    {
+     "repo": "restsharp/RestSharp",
+     "path": "src/RestSharp/Extensions/StringExtensions.cs",
+     "commit": "0ed7b0a6b64ab4b9838c2c0cb76a1808facebe09",
+     "license": "Apache-2.0",
+     "copyright": "2009-2020 John Sheehan, Andrew Young, Alexey Zimarev and RestSharp community",
+     "url": "https://github.com/restsharp/RestSharp/blob/0ed7b0a6b64ab4b9838c2c0cb76a1808facebe09/src/RestSharp/Extensions/StringExtensions.cs",
+     "lines": [
+      4,
+      37
+     ],
+     "modified": true,
+     "modification_note": "Parent of the CVE-2021-27293 fix (be39346); the extension methods after the regex fields replaced by `// ... (omitted)`; annotation comments added."
+    }
+   ],
+   "starter": "rules:\n  - id: regex-repeated-group\n    message: this regex repeats a group — check it for catastrophic backtracking\n    languages: [csharp]\n    severity: WARNING\n    patterns:\n      - pattern: new Regex(\"...\")\n",
+   "solution": "rules:\n  - id: regex-repeated-group\n    message: this regex repeats a group — check it for catastrophic backtracking\n    languages: [csharp]\n    severity: WARNING\n    patterns:\n      - pattern: new Regex(\"...\")\n      - pattern-regex: '\\)[*+]'\n",
+   "target": "// Source: https://github.com/restsharp/RestSharp/blob/0ed7b0a6b64ab4b9838c2c0cb76a1808facebe09/src/RestSharp/Extensions/StringExtensions.cs  (lines 15-42)\n// Copyright (c) 2009-2020 John Sheehan, Andrew Young, Alexey Zimarev and RestSharp community. Licensed under Apache-2.0. See THIRD_PARTY_NOTICES.md.\n// Modified for this tutorial: yes — the extension methods after the regex fields replaced by `// ... (omitted)`; annotation comments added.\nusing System;\nusing System.Collections.Generic;\nusing System.Globalization;\nusing System.Linq;\nusing System.Text;\nusing System.Text.RegularExpressions;\nusing System.Web;\n\nnamespace RestSharp.Extensions\n{\n    public static class StringExtensions\n    {\n        // ok: regex-repeated-group\n        static readonly Regex DateRegex    = new Regex(@\"\\\\?/Date\\((-?\\d+)(-|\\+)?([0-9]{4})?\\)\\\\?/\");\n        // ruleid: regex-repeated-group\n        static readonly Regex NewDateRegex = new Regex(@\"newDate\\((-?\\d+)*\\)\");\n\n        static readonly Regex IsUpperCaseRegex = new Regex(@\"^[A-Z]+$\");\n\n        static readonly Regex AddUnderscoresRegex1 = new Regex(@\"[-\\s]\");\n        static readonly Regex AddUnderscoresRegex2 = new Regex(@\"([a-z\\d])([A-Z])\");\n        static readonly Regex AddUnderscoresRegex3 = new Regex(@\"([A-Z]+)([A-Z][a-z])\");\n\n        static readonly Regex AddDashesRegex1 = new Regex(@\"[\\s]\");\n        static readonly Regex AddDashesRegex2 = new Regex(@\"([a-z\\d])([A-Z])\");\n        static readonly Regex AddDashesRegex3 = new Regex(@\"([A-Z]+)([A-Z][a-z])\");\n\n        static readonly Regex AddSpacesRegex1 = new Regex(@\"[-\\s]\");\n        static readonly Regex AddSpacesRegex2 = new Regex(@\"([a-z\\d])([A-Z])\");\n        static readonly Regex AddSpacesRegex3 = new Regex(@\"([A-Z]+)([A-Z][a-z])\");\n\n        // ... (omitted)\n    }\n}\n",
+   "solution_rules": {
+    "rules": [
+     {
+      "id": "regex-repeated-group",
+      "message": "this regex repeats a group — check it for catastrophic backtracking",
+      "languages": [
+       "csharp"
+      ],
+      "severity": "WARNING",
+      "patterns": [
+       {
+        "pattern": "new Regex(\"...\")"
+       },
+       {
+        "pattern-regex": "\\)[*+]"
+       }
+      ]
+     }
+    ]
+   },
+   "starter_rules": {
+    "rules": [
+     {
+      "id": "regex-repeated-group",
+      "message": "this regex repeats a group — check it for catastrophic backtracking",
+      "languages": [
+       "csharp"
+      ],
+      "severity": "WARNING",
+      "patterns": [
+       {
+        "pattern": "new Regex(\"...\")"
+       }
+      ]
+     }
+    ]
+   },
+   "expected": {
+    "ruleId": "regex-repeated-group",
+    "grade": "lines",
+    "ruleidLines": [
+     19
+    ],
+    "okLines": [
+     17
+    ],
+    "todoLines": [],
+    "todookLines": [],
+    "ranges": null,
+    "fixes": null,
+    "solutionMatches": [
+     {
+      "line": 19,
+      "metavars": {}
+     }
+    ],
+    "starterMatchedLines": [
+     17,
+     19,
+     21,
+     23,
+     24,
+     25,
+     27,
+     28,
+     29,
+     31,
+     32,
+     33
+    ]
+   }
+  },
+  {
+   "id": "csharp/2-composition/12-pattern-regex-named-groups",
+   "lang": "csharp",
+   "level": 2,
+   "level_name": "Composition",
+   "order": 12,
+   "slug": "pattern-regex-named-groups",
+   "title": "pattern-regex named groups — capture text into a metavariable",
+   "difficulty": 3,
+   "intro": false,
+   "rule_id": "broken-crypto-suppressed",
+   "target_path": "target.cs",
+   "tags": [
+    "pattern-regex",
+    "named-capture-groups",
+    "metavariable-regex",
+    "preprocessor-directives",
+    "security"
+   ],
+   "covers": {
+    "cheatsheet": [],
+    "rule_keys": [
+     "pattern-regex",
+     "metavariable-regex",
+     "patterns"
+    ]
+   },
+   "grade": "lines",
+   "wasm": "expected",
+   "starter_expects_error": false,
+   "instructions": "ExcelDataReader has to speak the legacy Office encryption formats, so its crypto helper silences\nthe .NET analyzer twice per algorithm: `CA5350` (\"weak\" — SHA1, 3DES) and `CA5351` (\"broken\" —\nMD5, RC2, DES). Suppose we only want to review the suppressions of the *broken* ones.\n\n`#pragma` lines are preprocessor directives: they never become part of the syntax tree, so no\n`pattern:` can match them and `pattern-regex` is the only option. The starter finds all four\n`#pragma warning disable` lines. The regex is compiled in multiline mode, which is why `^`\nanchors it to the start of a *line*.\n\nA regex can do more than match: a **named capturing group** `(?P<NAME>...)` binds the text it\ncaptures to the metavariable `$NAME`, which you can then use in the message and in other\noperators. Change `\\w+` into a group that binds the warning code to `$CODE`, then add a\n`metavariable-regex` on `$CODE` that keeps only `CA5351`.\n",
+   "hints": [
+    "The group name becomes the metavariable: `(?P<CODE>\\w+)` binds `$CODE`. Python-style `(?P<...>)` is the syntax Semgrep documents; plain `(?<CODE>...)` works too.",
+    "Then filter the binding like any other metavariable: `- metavariable-regex:` with `metavariable: $CODE` and `regex: CA5351`."
+   ],
+   "followup_title": "Correct!",
+   "followup": "Two operators cooperated: `pattern-regex` matched the directive and, through the named group,\nbound `$CODE` to `CA5350` or `CA5351`; `metavariable-regex` then kept the bindings that match\n`CA5351` — and the message can say which code was suppressed. A metavariable bound by a regex is\nplain text, not a syntax node, so it works with `metavariable-regex` but not with\n`metavariable-pattern`, `metavariable-comparison` or `metavariable-analysis`, which need\nsomething the parser produced.\n\nThe `restore` lines were never in danger: the regex spells out `disable`. And `^` did real work —\nwithout it the directive text would also be found inside a string or a comment that quotes it.\n\n**Try this:** change the filter to `regex: '5351'`: no matches, because `metavariable-regex` is\nleft-anchored and `$CODE` starts with `CA`; `.*5351` brings them back. Then capture only the\nnumber, `CA(?P<NUM>\\d+)`, and use `regex: '53(50|51)'` on `$NUM` to report both categories.\n",
+   "sources": [
+    {
+     "repo": "ExcelDataReader/ExcelDataReader",
+     "path": "src/ExcelDataReader/Core/OfficeCrypto/CryptoHelpers.cs",
+     "commit": "f7d7fd54b5bf79217e0369857b6e682f5948e67a",
+     "license": "MIT",
+     "copyright": "2014 ExcelDataReader",
+     "url": "https://github.com/ExcelDataReader/ExcelDataReader/blob/f7d7fd54b5bf79217e0369857b6e682f5948e67a/src/ExcelDataReader/Core/OfficeCrypto/CryptoHelpers.cs",
+     "lines": [
+      4,
+      43
+     ],
+     "modified": true,
+     "modification_note": "Two windows of the file (the hash and the cipher switch expressions, original lines 1-19 and 46-58); the helper methods between and after them replaced by `// ... (omitted)`; annotation comments added."
+    }
+   ],
+   "starter": "rules:\n  - id: broken-crypto-suppressed\n    message: analyzer warning $CODE (broken cryptographic algorithm) is suppressed here\n    languages: [csharp]\n    severity: WARNING\n    patterns:\n      - pattern-regex: '^#pragma warning disable \\w+'\n",
+   "solution": "rules:\n  - id: broken-crypto-suppressed\n    message: analyzer warning $CODE (broken cryptographic algorithm) is suppressed here\n    languages: [csharp]\n    severity: WARNING\n    patterns:\n      - pattern-regex: '^#pragma warning disable (?P<CODE>\\w+)'\n      - metavariable-regex:\n          metavariable: $CODE\n          regex: CA5351\n",
+   "target": "// Source: https://github.com/ExcelDataReader/ExcelDataReader/blob/f7d7fd54b5bf79217e0369857b6e682f5948e67a/src/ExcelDataReader/Core/OfficeCrypto/CryptoHelpers.cs  (lines 1-19, 46-58)\n// Copyright (c) 2014 ExcelDataReader. Licensed under MIT. See THIRD_PARTY_NOTICES.md.\n// Modified for this tutorial: yes — helper methods between and after the two switch expressions replaced by `// ... (omitted)`; annotation comments added.\nusing System.Security.Cryptography;\n\nnamespace ExcelDataReader.Core.OfficeCrypto;\n\ninternal static class CryptoHelpers\n{\n    public static HashAlgorithm Create(HashIdentifier hashAlgorithm) => hashAlgorithm switch\n    {\n        HashIdentifier.SHA512 => SHA512.Create(),\n        HashIdentifier.SHA384 => SHA384.Create(),\n        HashIdentifier.SHA256 => SHA256.Create(),\n// ok: broken-crypto-suppressed\n#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms\n        HashIdentifier.SHA1 => SHA1.Create(),\n#pragma warning restore CA5350 // Do Not Use Weak Cryptographic Algorithms\n// ruleid: broken-crypto-suppressed\n#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms\n        HashIdentifier.MD5 => MD5.Create(),\n#pragma warning restore CA5351 // Do Not Use Broken Cryptographic Algorithms\n        _ => throw new InvalidOperationException(\"Unsupported hash algorithm\"),\n    };\n    // ... (omitted)\n    public static SymmetricAlgorithm CreateCipher(CipherIdentifier identifier, int keySize, int blockSize, CipherMode mode) => identifier switch\n    {\n        CipherIdentifier.RC4 => new RC4Managed(),\n// ok: broken-crypto-suppressed\n#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms\n        CipherIdentifier.DES3 => InitCipher(TripleDES.Create(), keySize, blockSize, mode),\n#pragma warning restore CA5350 // Do Not Use Weak Cryptographic Algorithms\n// ruleid: broken-crypto-suppressed\n#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms\n        CipherIdentifier.RC2 => InitCipher(RC2.Create(), keySize, blockSize, mode),\n        CipherIdentifier.DES => InitCipher(DES.Create(), keySize, blockSize, mode),\n#pragma warning restore CA5351 // Do Not Use Broken Cryptographic Algorithms\n        CipherIdentifier.AES => InitCipher(Aes.Create(), keySize, blockSize, mode),\n        _ => throw new InvalidOperationException(\"Unsupported encryption method: \" + identifier.ToString()),\n    };\n\n    // ... (omitted)\n}\n",
+   "solution_rules": {
+    "rules": [
+     {
+      "id": "broken-crypto-suppressed",
+      "message": "analyzer warning $CODE (broken cryptographic algorithm) is suppressed here",
+      "languages": [
+       "csharp"
+      ],
+      "severity": "WARNING",
+      "patterns": [
+       {
+        "pattern-regex": "^#pragma warning disable (?P<CODE>\\w+)"
+       },
+       {
+        "metavariable-regex": {
+         "metavariable": "$CODE",
+         "regex": "CA5351"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "starter_rules": {
+    "rules": [
+     {
+      "id": "broken-crypto-suppressed",
+      "message": "analyzer warning $CODE (broken cryptographic algorithm) is suppressed here",
+      "languages": [
+       "csharp"
+      ],
+      "severity": "WARNING",
+      "patterns": [
+       {
+        "pattern-regex": "^#pragma warning disable \\w+"
+       }
+      ]
+     }
+    ]
+   },
+   "expected": {
+    "ruleId": "broken-crypto-suppressed",
+    "grade": "lines",
+    "ruleidLines": [
+     20,
+     34
+    ],
+    "okLines": [
+     16,
+     30
+    ],
+    "todoLines": [],
+    "todookLines": [],
+    "ranges": null,
+    "fixes": null,
+    "solutionMatches": [
+     {
+      "line": 20,
+      "metavars": {}
+     },
+     {
+      "line": 34,
+      "metavars": {}
+     }
+    ],
+    "starterMatchedLines": [
+     16,
+     20,
+     30,
+     34
+    ]
+   }
+  },
+  {
+   "id": "csharp/2-composition/13-metavariable-regex-lookahead",
+   "lang": "csharp",
+   "level": 2,
+   "level_name": "Composition",
+   "order": 13,
+   "slug": "metavariable-regex-lookahead",
+   "title": "metavariable-regex with a lookahead — \"anything but https\"",
+   "difficulty": 4,
+   "intro": false,
+   "rule_id": "insecure-cors-origin",
+   "target_path": "target.cs",
+   "tags": [
+    "metavariable-regex",
+    "regex-lookahead",
+    "case-insensitive",
+    "string-literal",
+    "security"
+   ],
+   "covers": {
+    "cheatsheet": [
+     "wildcard-arguments",
+     "argument"
+    ],
+    "rule_keys": [
+     "metavariable-regex",
+     "pattern-either",
+     "patterns"
+    ]
+   },
+   "grade": "lines",
+   "wasm": "expected",
+   "starter_expects_error": false,
+   "instructions": "These ASP.NET Core tests register CORS origins through `new CorsPolicyBuilder(...)` and\n`builder.WithOrigins(...)`. We want every origin *literal* that is not an `https://` URL —\n`http://example.com`, `http://*.example.com` and friends — while `\"HTTPS://example2.com\"` is\nfine: schemes are case-insensitive, and the builder normalises it.\n\nSaying \"not https\" in a regex calls for a **negative lookahead**, `(?!...)`. The starter uses\none — and reports far too much: `new CorsPolicyBuilder(originalPolicy)` and\n`builder.WithOrigins(args)` are flagged although they pass no literal at all. Remember two\nthings about `metavariable-regex`: it sees the *source text* of the binding, quotes included,\nand it is left-anchored — the regex is tried only at the start of that text.\n\nChange the regex so that only string literals whose scheme is not `https://` match, in any\nletter case.\n",
+   "hints": [
+    "A lookahead consumes nothing, so `(?!\"https://)` succeeds at the start of *every* binding that does not begin with `\"https://` — including plain identifiers. Require the opening quote first, then look ahead.",
+    "`regex: '(?i)\"(?!https://)'` — the `\"` restricts the match to literals, the lookahead excludes the secure ones, `(?i)` makes it case-insensitive."
+   ],
+   "followup_title": "Correct!",
+   "followup": "Read the regex from the left: `(?i)` switches on case-insensitivity for everything that follows;\n`\"` must be the first character of the binding (left-anchoring does the rest — no `^` needed), so\n`originalPolicy` and `args` are out; `(?!https://)` then peeks at the text after the quote\nwithout consuming it and fails for `\"HTTPS://example2.com\"`. A lookahead is the idiomatic way\nto say \"does not start with\" inside a single regex; the alternative is a positive pattern such as\n`\"http://` — shorter, but silent about `ftp://`, `ws://` or a scheme-less `\"example.com\"`.\n\nNotice what the starter got wrong twice on the same line: `new CorsPolicyBuilder(\"http://www.EXAMPLE.com\", \"HTTPS://example2.com\")`\nwas reported for *both* arguments, because the case-sensitive `(?!\"https://)` let `\"HTTPS://`\nthrough. Grading is by line, so that bug only shows in the number of findings — add `$ORIGIN`\nto the message and count them.\n\n**Try this:** the `Assert.Equal(new List<string>() { \"http://example.com\", ... })` lines contain\nthe same literals and are never reported — the syntax patterns decide *where* to look, the regex\nonly decides *what* is acceptable. Replace the whole rule with `pattern-regex: '\"http://'` and\nwatch the assertions and `IsOriginAllowed(...)` calls light up too.\n",
+   "sources": [
+    {
+     "repo": "dotnet/aspnetcore",
+     "path": "src/Middleware/CORS/test/UnitTests/CorsPolicyBuilderTests.cs",
+     "commit": "c85baf8db0c72ae8e68643029d514b2e737c9fae",
+     "license": "MIT",
+     "copyright": ".NET Foundation and Contributors",
+     "url": "https://github.com/dotnet/aspnetcore/blob/c85baf8db0c72ae8e68643029d514b2e737c9fae/src/Middleware/CORS/test/UnitTests/CorsPolicyBuilderTests.cs",
+     "lines": [
+      4,
+      67
+     ],
+     "modified": true,
+     "modification_note": "Four of the test methods kept (original lines 4-7, 110-146 and 189-201), the rest replaced by `// ... (omitted)`; annotation comments added."
+    }
+   ],
+   "starter": "rules:\n  - id: insecure-cors-origin\n    message: CORS origin $ORIGIN is not served over https\n    languages: [csharp]\n    severity: WARNING\n    patterns:\n      - pattern-either:\n          - pattern: new CorsPolicyBuilder(..., $ORIGIN, ...)\n          - pattern: $B.WithOrigins(..., $ORIGIN, ...)\n      - metavariable-regex:\n          metavariable: $ORIGIN\n          regex: '(?!\"https://)'\n",
+   "solution": "rules:\n  - id: insecure-cors-origin\n    message: CORS origin $ORIGIN is not served over https\n    languages: [csharp]\n    severity: WARNING\n    patterns:\n      - pattern-either:\n          - pattern: new CorsPolicyBuilder(..., $ORIGIN, ...)\n          - pattern: $B.WithOrigins(..., $ORIGIN, ...)\n      - metavariable-regex:\n          metavariable: $ORIGIN\n          regex: '(?i)\"(?!https://)'\n",
+   "target": "// Source: https://github.com/dotnet/aspnetcore/blob/c85baf8db0c72ae8e68643029d514b2e737c9fae/src/Middleware/CORS/test/UnitTests/CorsPolicyBuilderTests.cs  (lines 4-7, 110-146, 189-201)\n// Copyright (c) .NET Foundation and Contributors. Licensed under MIT. See THIRD_PARTY_NOTICES.md.\n// Modified for this tutorial: yes — four of the test methods kept, the rest replaced by `// ... (omitted)`; annotation comments added.\nnamespace Microsoft.AspNetCore.Cors.Infrastructure;\n\npublic class CorsPolicyBuilderTests\n{\n\n    [Fact]\n    public void WithOrigins_AddsOrigins()\n    {\n        // Arrange\n        var builder = new CorsPolicyBuilder();\n\n        // Act\n        // ruleid: insecure-cors-origin\n        builder.WithOrigins(\"http://example.com\", \"http://example2.com\");\n\n        // Assert\n        var corsPolicy = builder.Build();\n        Assert.False(corsPolicy.AllowAnyOrigin);\n        // ok: insecure-cors-origin\n        Assert.Equal(new List<string>() { \"http://example.com\", \"http://example2.com\" }, corsPolicy.Origins);\n    }\n\n    [Fact]\n    public void WithOrigins_NormalizesOrigins()\n    {\n        // Arrange\n        // ruleid: insecure-cors-origin\n        var builder = new CorsPolicyBuilder(\"http://www.EXAMPLE.com\", \"HTTPS://example2.com\");\n\n        // Assert\n        var corsPolicy = builder.Build();\n        Assert.Equal(new List<string>() { \"http://www.example.com\", \"https://example2.com\" }, corsPolicy.Origins);\n    }\n\n    [Fact]\n    public void WithOrigins_ThrowsIfArgumentNull()\n    {\n        // Arrange\n        var builder = new CorsPolicyBuilder();\n        string[] args = null;\n\n        // Act / Assert\n        // ok: insecure-cors-origin\n        Assert.Throws<ArgumentNullException>(() => builder.WithOrigins(args));\n    }\n    // ... (omitted)\n    [Fact]\n    public void SetIsOriginAllowedToAllowWildcardSubdomains_AllowsWildcardSubdomains()\n    {\n        // Arrange\n        // ruleid: insecure-cors-origin\n        var builder = new CorsPolicyBuilder(\"http://*.example.com\");\n\n        // Act\n        builder.SetIsOriginAllowedToAllowWildcardSubdomains();\n\n        // Assert\n        var corsPolicy = builder.Build();\n        // ok: insecure-cors-origin\n        Assert.True(corsPolicy.IsOriginAllowed(\"http://test.example.com\"));\n    }\n\n    // ... (omitted)\n}\n",
+   "solution_rules": {
+    "rules": [
+     {
+      "id": "insecure-cors-origin",
+      "message": "CORS origin $ORIGIN is not served over https",
+      "languages": [
+       "csharp"
+      ],
+      "severity": "WARNING",
+      "patterns": [
+       {
+        "pattern-either": [
+         {
+          "pattern": "new CorsPolicyBuilder(..., $ORIGIN, ...)"
+         },
+         {
+          "pattern": "$B.WithOrigins(..., $ORIGIN, ...)"
+         }
+        ]
+       },
+       {
+        "metavariable-regex": {
+         "metavariable": "$ORIGIN",
+         "regex": "(?i)\"(?!https://)"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "starter_rules": {
+    "rules": [
+     {
+      "id": "insecure-cors-origin",
+      "message": "CORS origin $ORIGIN is not served over https",
+      "languages": [
+       "csharp"
+      ],
+      "severity": "WARNING",
+      "patterns": [
+       {
+        "pattern-either": [
+         {
+          "pattern": "new CorsPolicyBuilder(..., $ORIGIN, ...)"
+         },
+         {
+          "pattern": "$B.WithOrigins(..., $ORIGIN, ...)"
+         }
+        ]
+       },
+       {
+        "metavariable-regex": {
+         "metavariable": "$ORIGIN",
+         "regex": "(?!\"https://)"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "expected": {
+    "ruleId": "insecure-cors-origin",
+    "grade": "lines",
+    "ruleidLines": [
+     17,
+     31,
+     55
+    ],
+    "okLines": [
+     23,
+     47,
+     63
+    ],
+    "todoLines": [],
+    "todookLines": [],
+    "ranges": null,
+    "fixes": null,
+    "solutionMatches": [
+     {
+      "line": 17,
+      "metavars": {}
+     },
+     {
+      "line": 17,
+      "metavars": {}
+     },
+     {
+      "line": 31,
+      "metavars": {}
+     },
+     {
+      "line": 55,
+      "metavars": {}
+     }
+    ],
+    "starterMatchedLines": [
+     17,
+     31,
+     47,
+     55
     ]
    }
   },

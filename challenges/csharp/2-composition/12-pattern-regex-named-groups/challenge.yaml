@@ -1,0 +1,51 @@
+title: pattern-regex named groups — capture text into a metavariable
+level: 2
+difficulty: 3
+rule_id: broken-crypto-suppressed
+tags: [pattern-regex, named-capture-groups, metavariable-regex, preprocessor-directives, security]
+covers:
+  cheatsheet: []
+  rule_keys: [pattern-regex, metavariable-regex, patterns]
+wasm: expected
+instructions: |
+  ExcelDataReader has to speak the legacy Office encryption formats, so its crypto helper silences
+  the .NET analyzer twice per algorithm: `CA5350` ("weak" — SHA1, 3DES) and `CA5351` ("broken" —
+  MD5, RC2, DES). Suppose we only want to review the suppressions of the *broken* ones.
+
+  `#pragma` lines are preprocessor directives: they never become part of the syntax tree, so no
+  `pattern:` can match them and `pattern-regex` is the only option. The starter finds all four
+  `#pragma warning disable` lines. The regex is compiled in multiline mode, which is why `^`
+  anchors it to the start of a *line*.
+
+  A regex can do more than match: a **named capturing group** `(?P<NAME>...)` binds the text it
+  captures to the metavariable `$NAME`, which you can then use in the message and in other
+  operators. Change `\w+` into a group that binds the warning code to `$CODE`, then add a
+  `metavariable-regex` on `$CODE` that keeps only `CA5351`.
+hints:
+  - "The group name becomes the metavariable: `(?P<CODE>\\w+)` binds `$CODE`. Python-style `(?P<...>)` is the syntax Semgrep documents; plain `(?<CODE>...)` works too."
+  - "Then filter the binding like any other metavariable: `- metavariable-regex:` with `metavariable: $CODE` and `regex: CA5351`."
+followup_title: Correct!
+followup: |
+  Two operators cooperated: `pattern-regex` matched the directive and, through the named group,
+  bound `$CODE` to `CA5350` or `CA5351`; `metavariable-regex` then kept the bindings that match
+  `CA5351` — and the message can say which code was suppressed. A metavariable bound by a regex is
+  plain text, not a syntax node, so it works with `metavariable-regex` but not with
+  `metavariable-pattern`, `metavariable-comparison` or `metavariable-analysis`, which need
+  something the parser produced.
+
+  The `restore` lines were never in danger: the regex spells out `disable`. And `^` did real work —
+  without it the directive text would also be found inside a string or a comment that quotes it.
+
+  **Try this:** change the filter to `regex: '5351'`: no matches, because `metavariable-regex` is
+  left-anchored and `$CODE` starts with `CA`; `.*5351` brings them back. Then capture only the
+  number, `CA(?P<NUM>\d+)`, and use `regex: '53(50|51)'` on `$NUM` to report both categories.
+sources:
+  - repo: ExcelDataReader/ExcelDataReader
+    path: src/ExcelDataReader/Core/OfficeCrypto/CryptoHelpers.cs
+    commit: f7d7fd54b5bf79217e0369857b6e682f5948e67a
+    license: MIT
+    copyright: "2014 ExcelDataReader"
+    url: https://github.com/ExcelDataReader/ExcelDataReader/blob/f7d7fd54b5bf79217e0369857b6e682f5948e67a/src/ExcelDataReader/Core/OfficeCrypto/CryptoHelpers.cs
+    lines: [4, 43]
+    modified: true
+    modification_note: "Two windows of the file (the hash and the cipher switch expressions, original lines 1-19 and 46-58); the helper methods between and after them replaced by `// ... (omitted)`; annotation comments added."

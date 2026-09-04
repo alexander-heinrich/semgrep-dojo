@@ -1,0 +1,7 @@
+rules:
+  - id: broken-crypto-suppressed
+    message: analyzer warning $CODE (broken cryptographic algorithm) is suppressed here
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern-regex: '^#pragma warning disable \w+'

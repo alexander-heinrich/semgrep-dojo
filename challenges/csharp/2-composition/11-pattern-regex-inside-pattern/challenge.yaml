@@ -1,0 +1,53 @@
+title: pattern-regex inside a syntax match — look into a string literal
+level: 2
+difficulty: 3
+rule_id: regex-repeated-group
+tags: [pattern-regex, string-literal, regex-escaping, security]
+covers:
+  cheatsheet: [wildcard-strings]
+  rule_keys: [pattern-regex, pattern, patterns]
+wasm: expected
+instructions: |
+  RestSharp keeps a dozen regular expressions in `static readonly Regex` fields. One of them,
+  `NewDateRegex`, was [CVE-2021-27293](https://github.com/advisories/GHSA-9pq7-rcxv-47vq): the
+  group `(-?\d+)*` repeats a group that can itself repeat, so a hostile server response makes the
+  matcher backtrack for a very long time (ReDoS). We want to find regex literals that quantify a
+  whole group with `*` or `+` — the text `)*` or `)+`.
+
+  A syntax pattern cannot help here: `"..."` matches a *whole* string literal and has no way to
+  look at the characters inside it. `pattern-regex` can, because it works on the source text.
+  The starter's `pattern: new Regex("...")` matches all twelve fields; combine it with a
+  `pattern-regex` so that only the constructor call whose literal contains `)*` or `)+` remains.
+
+  Write the `pattern-regex` entry. Remember that `)` is a regex metacharacter, so it needs a
+  backslash — and put the regex in single quotes so YAML leaves the backslash alone.
+hints:
+  - "Add a second entry under `patterns:`, `- pattern-regex: '...'`. Under `patterns:` the regex hit must lie inside the range of the syntax match, so the regex is effectively searched *within* each `new Regex(\"...\")` call."
+  - "`pattern-regex: '\\)[*+]'` — an escaped closing parenthesis followed by a star or a plus."
+followup_title: Correct!
+followup: |
+  Under `patterns:`, a `pattern-regex` entry is ANDed with the syntax pattern by *range*: the regex
+  hit has to fall inside a range that `pattern: new Regex("...")` matched, so the eleven other
+  fields drop out even though they are perfectly good `new Regex(...)` calls. The finding is
+  reported at the regex hit — the inner of the two ranges. Note that `"..."` happily matched the
+  verbatim literal `@"newDate\((-?\d+)*\)"`: the `@` prefix is part of the literal token, and the
+  regex saw the raw text with its backslashes exactly as written in the file.
+
+  This is a rough heuristic — `([A-Z]+)` is harmless because the `+` is *inside* the group — but it
+  found the real CVE. The exact tool for the job is `metavariable-analysis` with `analyzer: redos`,
+  which parses the captured regex and reports only patterns with exponential worst-case behaviour.
+
+  **Try this:** swap the regex for `'\{\d+\}'` to find bounded repetitions such as `{4}` (one
+  field), then for `'\)\?'` (which field has an optional group?). Finally delete the
+  `pattern:` line and run the regex on its own: same result in this file — until someone adds a
+  comment that mentions `)*`.
+sources:
+  - repo: restsharp/RestSharp
+    path: src/RestSharp/Extensions/StringExtensions.cs
+    commit: 0ed7b0a6b64ab4b9838c2c0cb76a1808facebe09
+    license: Apache-2.0
+    copyright: "2009-2020 John Sheehan, Andrew Young, Alexey Zimarev and RestSharp community"
+    url: https://github.com/restsharp/RestSharp/blob/0ed7b0a6b64ab4b9838c2c0cb76a1808facebe09/src/RestSharp/Extensions/StringExtensions.cs
+    lines: [4, 37]
+    modified: true
+    modification_note: "Parent of the CVE-2021-27293 fix (be39346); the extension methods after the regex fields replaced by `// ... (omitted)`; annotation comments added."

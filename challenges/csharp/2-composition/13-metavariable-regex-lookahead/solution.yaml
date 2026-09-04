@@ -1,0 +1,12 @@
+rules:
+  - id: insecure-cors-origin
+    message: CORS origin $ORIGIN is not served over https
+    languages: [csharp]
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: new CorsPolicyBuilder(..., $ORIGIN, ...)
+          - pattern: $B.WithOrigins(..., $ORIGIN, ...)
+      - metavariable-regex:
+          metavariable: $ORIGIN
+          regex: '(?i)"(?!https://)'
