@@ -6,7 +6,7 @@ A static site (GitHub Pages) plus a CLI checker for learning the
 [semgrep.dev/learn](https://semgrep.dev/learn) tutorial does — but with new challenges, three
 difficulty levels, and target code taken from real open-source .NET projects.
 
-Live site: https://alexander-heinrich.github.io/Semgrep-Dojo/
+Live site: https://alexander-heinrich.github.io/semgrep-dojo/
 
 Your rule runs **in the browser** on a WebAssembly build of the Semgrep OSS engine; nothing is sent
 anywhere. Grading works like `semgrep --test`: the set of matched start lines must equal the set of
