@@ -2,7 +2,9 @@
 // Run every challenge's reference solution through the browser engine (Node build) and compare with
 // the CLI-derived expectations in docs/data/challenges.json.
 //
-// Usage: node scripts/wasm_parity.mjs [--only SUBSTRING] [--data PATH] [--rule rule.yaml --target file.cs] [--verbose]
+// Usage: node scripts/wasm_parity.mjs [--only SUBSTRING] [--data PATH] [--verbose]
+//
+// To run a single rule against a single file, use scripts/run_rule.mjs instead.
 //
 // Uses the CommonJS builds vendored next to the browser builds in docs/vendor/semgrep/ (same engine,
 // same parsers, rebuilt from semgrep tag v1.81.0 by scripts/rebuild-engine/).
@@ -17,17 +19,6 @@ const argValue = (name) => (args.find((a) => a.startsWith(`${name}=`)) || '').sl
 const only = argValue('--only');
 const verbose = args.includes('--verbose');
 const { execute, finish, startDir } = await loadEngine({ verbose });
-
-// Ad-hoc mode
-if (args.includes('--rule')) {
-  const yaml = await import('js-yaml').catch(() => null);
-  if (!yaml) { console.error('ad-hoc mode needs js-yaml (npm install)'); finish(2); }
-  const rule = yaml.default.load(readFileSync(path.resolve(startDir, argValue('--rule')), 'utf8'));
-  const target = readFileSync(path.resolve(startDir, argValue('--target')), 'utf8');
-  const res = execute(rule, target, argValue('--target-path') || 'target.cs');
-  console.log(JSON.stringify(res, null, 1));
-  finish(0);
-}
 
 const dataArg = argValue('--data');
 const data = JSON.parse(readFileSync(dataArg ? path.resolve(startDir, dataArg) : path.join(root, 'docs', 'data', 'challenges.json'), 'utf8'));

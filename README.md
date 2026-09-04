@@ -91,7 +91,8 @@ sh scripts/rebuild-engine/install.sh   # copy into docs/vendor/semgrep/ under ve
 The build pins the opam repository to a snapshot from the release day and takes about 15 minutes on an
 Apple-silicon Mac with Colima (the emscripten stage runs under Rosetta). Everything is LGPL-2.1 and
 unmodified; see `THIRD_PARTY_NOTICES.md`. `scripts/semantics_check.mjs`, `scripts/wasm_parity.mjs` and
-the probes recorded in `spike/RESULTS.md` show this build agreeing with Semgrep 1.172.0 on every check;
+the probes recorded in `spike/RESULTS.md` show this build agreeing with Semgrep 1.172.0 on every check, all of
+them on C#, the only language the site runs (the parser half of that evidence does not transfer to other languages);
 the same challenges also pass unchanged on Opengrep 1.29.0.
 
 ## License

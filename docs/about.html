@@ -27,11 +27,12 @@
      source tree at tag <code>v1.81.0</code> (July 2024) — the last release that still contains the browser build tooling,
      which Semgrep later moved into its proprietary repository. The C# and Python parsers come from the same build (Python
      is only needed for <code>metavariable-comparison</code>). Nothing is sent to a server.</p>
-  <p>The build recipe is <code>scripts/rebuild-engine/</code> in the repository. On every probe we ran — the rule-syntax
-     operators, taint mode, autofix and message rendering, and C# 9 to 14 syntax samples — this build behaves exactly like
-     Semgrep 1.172.0; all challenges are validated against a current Semgrep CLI when the site is built, and a parity script
-     confirms the browser engine agrees for every one of them. Two years of newer releases are still missing, so if you find a
-     rule that behaves differently, the CLI result is the reference.</p>
+  <p>The build recipe is <code>scripts/rebuild-engine/</code> in the repository. For C#, the only language this site runs, the
+     build behaves exactly like Semgrep 1.172.0 on every probe we ran: the rule-syntax operators, taint mode, autofix and
+     message rendering, and C# 9 to 14 syntax samples. All challenges are validated against a current Semgrep CLI when the
+     site is built, and a parity script confirms the browser engine agrees for every one of them. The rule-syntax half of that
+     evidence is largely language-independent; the parser half is verified for C# alone. Two years of newer releases are still
+     missing, so if you find a rule that behaves differently, the CLI result is the reference.</p>
 
   <h2>Practicing from the terminal</h2>
   <pre>git clone https://github.com/alexander-heinrich/learn-semgrep && cd learn-semgrep
