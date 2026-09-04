@@ -95,7 +95,8 @@ export function createTargetEditor(parent, text) {
     parent,
     state: EditorState.create({
       doc: text,
-      extensions: [basicSetup, csharp(), themeExt, EditorState.readOnly.of(true), EditorView.editable.of(false), lineClassField, markersField, dojoGutter],
+      extensions: [basicSetup, csharp(), themeExt, EditorState.readOnly.of(true), EditorView.editable.of(false), lineClassField, markersField, dojoGutter,
+        smallScreen() ? EditorView.lineWrapping : []],
     }),
   });
   return {
