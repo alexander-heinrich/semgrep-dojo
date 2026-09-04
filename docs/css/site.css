@@ -160,9 +160,8 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
   .editor-block.target { height: min(480px, 60vh); order: 2; }
   /* the verdict goes between the rule and the target instead of below a full-height editor */
   .results { order: 1; max-height: none; border-bottom: 1px solid var(--line); }
-  /* 16px stops iOS Safari zooming the page when the editor gets focus; the read-only target can stay smaller */
-  .editor-block.rule .cm-editor { font-size: 16px; }
-  .editor-block.target .cm-editor { font-size: 14px; }
+  /* same size in both editors; the iOS focus-zoom that a <16px editable would trigger is suppressed in challenge.html */
+  .editor .cm-editor { font-size: 14px; }
   .toolbar { flex-wrap: wrap; row-gap: .2rem; }
   .toolbar .legend { flex-basis: 100%; }
 }
