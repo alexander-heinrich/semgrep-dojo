@@ -25,17 +25,13 @@ const layoutExt = EditorView.theme({
   '&.cm-focused': { outline: 'none' },
 });
 
-// ---- colour theme (shared by every editor on the page, switchable at runtime) -------------------
+// ---- colour theme (follows the system colour scheme, re-applied to open editors when it changes) --
 const colourComp = new Compartment();
-let colourName = 'auto';
 const liveViews = new Set();
-const colourExt = () => colourComp.of(themeExtension(colourName));
-/** Apply a theme ('auto' | 'light' | palette name from themes.js) to every open editor. */
-export function setTheme(name) {
-  colourName = name || 'auto';
-  for (const v of liveViews) v.dispatch({ effects: colourComp.reconfigure(themeExtension(colourName)) });
-}
-if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (colourName === 'auto') setTheme('auto'); });
+const colourExt = () => colourComp.of(themeExtension());
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  for (const v of liveViews) v.dispatch({ effects: colourComp.reconfigure(themeExtension()) });
+});
 
 // ---- rule editor ---------------------------------------------------------------------------------
 export function createRuleEditor(parent, text, { onRun, onChange } = {}) {
@@ -112,8 +108,7 @@ export function createTargetEditor(parent, text) {
     parent,
     state: EditorState.create({
       doc: text,
-      extensions: [basicSetup, csharp(), layoutExt, colourExt(), EditorState.readOnly.of(true), EditorView.editable.of(false), lineClassField, markersField, dojoGutter,
-        smallScreen() ? EditorView.lineWrapping : []],
+      extensions: [basicSetup, csharp(), layoutExt, colourExt(), EditorState.readOnly.of(true), EditorView.editable.of(false), lineClassField, markersField, dojoGutter],
     }),
   });
   liveViews.add(view);
