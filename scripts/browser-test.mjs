@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // End-to-end browser check with headless Chrome over the DevTools protocol (no extra dependencies).
 // Serves docs/ on a local port, opens the home page and one challenge, runs starter (must fail) and
-// solution (must pass). Usage: node scripts/browser-test.mjs [--id csharp/1-basics/04-metavariables] [--all]
+// solution (must pass); --playground drives the playground page instead (--all does both).
+// Usage: node scripts/browser-test.mjs [--id csharp/1-basics/04-metavariables] [--all] [--playground]
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +16,9 @@ const port = 8123, cdpPort = 9334;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const data = JSON.parse(readFileSync(path.join(root, 'docs/data/challenges.json'), 'utf8'));
 const onlyId = args.includes('--id') ? args[args.indexOf('--id') + 1] : null;
-const ids = args.includes('--all') ? data.challenges.filter((c) => c.wasm !== 'cli-only').map((c) => c.id) : [onlyId || data.challenges[0].id];
+const doPlayground = args.includes('--playground') || args.includes('--all');
+const doChallenges = !args.includes('--playground') || args.includes('--all') || !!onlyId;
+const ids = !doChallenges ? [] : args.includes('--all') ? data.challenges.filter((c) => c.wasm !== 'cli-only').map((c) => c.id) : [onlyId || data.challenges[0].id];
 
 const server = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1', '-d', path.join(root, 'docs')], { stdio: 'ignore' });
 const browser = spawn(chrome, ['--headless=new', '--disable-gpu', '--no-sandbox', `--remote-debugging-port=${cdpPort}`, '--user-data-dir=/tmp/claude-dojo-profile', 'about:blank'], { stdio: 'ignore' });
@@ -73,6 +76,74 @@ try {
     await sleep(300);
     check(await evaluate(`!!document.querySelector('#rule-messages .msg.error')`), 'YAML error surfaced');
     check(await evaluate(`JSON.parse(localStorage.getItem('semgrep-dojo.v1')).progress[${JSON.stringify(cid)}].status.startsWith('solved')`), 'progress saved');
+  }
+  if (doPlayground) {
+    console.log('playground');
+    const first = data.challenges[0];
+    const cs = 'class Extra { void M(string s) { Console.WriteLine(s); } }';
+    const csRule = 'rules:\n  - id: console\n    languages: [csharp]\n    severity: WARNING\n    message: console\n    pattern: Console.WriteLine(...)\n';
+    const py = 'import os\n\ndef go(p):\n    os.system("ls " + p)\n    print(p)\n';
+    const pyRule = 'rules:\n  - id: shell\n    languages: [python]\n    severity: WARNING\n    message: shell\n    pattern: os.system(...)\n';
+    const summary = () => evaluate(`(document.querySelector('#results .summary') || {}).textContent || ''`);
+    await evaluate(`localStorage.removeItem('semgrep-dojo.v1')`);
+    await send('Page.navigate', { url: `http://127.0.0.1:${port}/playground.html` });
+    await waitFor(`window.__playground && __playground.ruleEd && __playground.targetEd`, 15000, 'playground page');
+    check((await evaluate(`__playground.files.length`)) === 1, 'sample file loaded');
+    check((await evaluate(`document.querySelectorAll('#filelist li').length`)) === 1, 'file list rendered');
+    check((await evaluate(`document.querySelectorAll('#target-editor .cm-line').length`)) > 5, 'target editor rendered');
+    await waitFor(`__playground.engine.status === 'ready' || __playground.engine.status === 'fatal'`, 90000, 'engine ready');
+    check((await evaluate(`__playground.engine.status`)) === 'ready', `engine ready (${await evaluate(`document.getElementById('engine-status').title`)})`);
+    // the sample rule on the sample file
+    await evaluate(`__playground.run()`);
+    check(/^● 1 match in 1 of 1 file/.test(await summary()), `sample rule matches once (${(await summary()).slice(0, 60)})`);
+    check((await evaluate(`document.querySelectorAll('#target-editor .cm-line-matched').length`)) === 1, 'matched line highlighted');
+    // a second file, results per file
+    await evaluate(`__playground.addFile('Extra/Other.cs', ${JSON.stringify(cs)}); __playground.ruleEd.set(${JSON.stringify(csRule)}); __playground.run()`);
+    check(/^● 3 matches in 2 of 2 files/.test(await summary()), `two files summarised (${(await summary()).slice(0, 60)})`);
+    check((await evaluate(`[...document.querySelectorAll('#filelist .count')].map((e) => e.textContent).join(',')`)) === '2,1', 'per-file counts');
+    check((await evaluate(`document.querySelectorAll('#results .match .path').length`)) === 3, 'paths in the raw match list');
+    check((await evaluate(`__playground.state.active === 1 && document.querySelectorAll('#target-editor .cm-line-matched').length === 1`)), 'new file active with its match highlighted');
+    await evaluate(`document.querySelector('#filelist button.name').click()`);
+    check((await evaluate(`document.querySelectorAll('#target-editor .cm-line-matched').length`)) === 2, 'switching files switches highlights');
+    // a path that looks like an engine scratch directory round-trips untouched
+    await evaluate(`__playground.addFile('run-1/Nested.cs', ${JSON.stringify(cs)}); __playground.run()`);
+    check(/^● 4 matches in 3 of 3 files/.test(await summary()), `a run-N folder name round-trips (${(await summary()).slice(0, 60)})`);
+    check((await evaluate(`[...document.querySelectorAll('#filelist .count')].map((e) => e.textContent).join(',')`)) === '2,1,1', 'per-file counts with a run-N path');
+    // editing a file marks it stale and clears its highlights; the text is read back at the next run
+    await evaluate(`__playground.targetEd.view.dispatch({ changes: { from: 0, insert: '// edited\\n' } })`);
+    check(await evaluate(`!!document.querySelector('#filelist li.active .count.stale') && document.querySelectorAll('#target-editor .cm-line-matched').length === 0`), 'edit marks the file stale and clears its highlights');
+    check(await evaluate(`__playground.files[2].text.startsWith('// edited')`), 'edited text is read back');
+    await evaluate(`__playground.run()`);
+    check(/^● 4 matches in 3 of 3 files/.test(await summary()) && !(await evaluate(`!!document.querySelector('#filelist .count.stale')`)), 'rerun clears the stale marks');
+    // python
+    await evaluate(`__playground.setLang('python'); __playground.clearFiles(); __playground.addFile('pkg/app.py', ${JSON.stringify(py)}); __playground.ruleEd.set(${JSON.stringify(pyRule)}); __playground.run()`);
+    check(/^● 1 match in 1 of 1 file/.test(await summary()), `python rule matches (${(await summary()).slice(0, 60)})`);
+    check((await evaluate(`document.querySelectorAll('#target-editor .cm-line-matched').length`)) === 1, 'python match highlighted');
+    // a file that does not carry the selected language's extension draws a hint
+    await evaluate(`__playground.addFile('legacy/Old.cs', ${JSON.stringify(cs)}); __playground.run()`);
+    check(await evaluate(`/does not end in \\.py/.test(document.getElementById('results').textContent)`), 'extension mismatch hinted');
+    await evaluate(`__playground.removeFile(1)`);
+    // a rule for the other language is skipped by the engine: the page must say so
+    await evaluate(`__playground.ruleEd.set(${JSON.stringify(csRule)}); __playground.run()`);
+    check(await evaluate(`/No rule lists/.test((document.querySelector('#results .msg.warn') || {}).textContent || '')`), 'language mismatch warned');
+    check(/^○ 0 matches/.test(await summary()), 'language mismatch yields no matches');
+    // YAML error path
+    await evaluate(`__playground.ruleEd.set('rules:\\n  - id: x\\n    pattern: [unclosed'); __playground.run()`);
+    check(await evaluate(`!!document.querySelector('#rule-messages .msg.error')`), 'YAML error surfaced');
+    // the language survives a reload
+    await send('Page.navigate', { url: `http://127.0.0.1:${port}/playground.html` });
+    await waitFor(`window.__playground && __playground.ruleEd`, 15000, 'playground reload');
+    check((await evaluate(`__playground.state.lang + '/' + document.getElementById('lang').value`)) === 'python/python', 'language remembered');
+    check((await evaluate(`__playground.files[0].path`)) === 'sample/main.py', 'python sample loaded');
+    // hand-over from a challenge
+    await send('Page.navigate', { url: `http://127.0.0.1:${port}/challenge.html#/${first.id}` });
+    await waitFor(`window.__dojo && __dojo.ruleEd`, 15000, 'challenge page');
+    await evaluate(`document.getElementById('open-playground').click()`);
+    await waitFor(`location.pathname.endsWith('playground.html') && window.__playground && __playground.files.length === 1`, 15000, 'hand-over');
+    check((await evaluate(`__playground.files[0].path`)) === first.target_path, 'challenge target handed over');
+    check((await evaluate(`__playground.ruleEd.get()`)) === first.starter, 'challenge rule handed over');
+    check((await evaluate(`__playground.state.lang`)) === 'csharp', 'hand-over sets C#');
+    check((await evaluate(`sessionStorage.getItem('semgrep-dojo.playground.handoff')`)) === null, 'hand-over consumed');
   }
   if (consoleErrors.length) { console.log('console errors:'); consoleErrors.forEach((e) => console.log('   ' + String(e).slice(0, 300))); }
   check(consoleErrors.length === 0, 'no console errors');

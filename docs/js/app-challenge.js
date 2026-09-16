@@ -5,6 +5,8 @@ import { annotationLines } from './annotations.js';
 import { createRuleEditor, createTargetEditor, smallScreen } from './editors.js';
 import { storage } from './storage.js';
 import { md, escapeHtml } from './markdown.js';
+import { renderMatchList } from './results.js';
+import { bindEngineStatus, showRuleError, markErrorLine } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
 const data = await (await fetch('data/challenges.json')).json();
@@ -17,17 +19,7 @@ function currentId() { return decodeURIComponent(location.hash.replace(/^#\/?/, 
 function linkTo(c) { return `#/${c.id}`; }
 const dots = (n) => '●'.repeat(n) + '○'.repeat(5 - n);
 
-function renderStatus({ status, progress, stage, message, timings }) {
-  const el = $('engine-status');
-  el.className = 'pill ' + status;
-  if (status === 'downloading') el.textContent = `engine: downloading ${Math.round((progress || 0) * 100)}%`;
-  else if (status === 'starting') el.textContent = `engine: starting${stage ? ' (' + stage + ')' : ''}`;
-  else if (status === 'ready') el.textContent = 'engine: ready';
-  else if (status === 'fatal') el.textContent = 'engine: failed';
-  else el.textContent = 'engine: idle';
-  if (message) el.title = message; else if (timings) el.title = `ready in ${timings.python || timings.csharp} ms`;
-}
-engine.onStatus(renderStatus);
+bindEngineStatus(engine, $('engine-status'));
 
 function load() {
   const id = currentId();
@@ -102,11 +94,7 @@ async function run() {
   const msgs = $('rule-messages');
   msgs.innerHTML = '';
   ruleEd.markError(null);
-  if (parsed.error) {
-    msgs.innerHTML = `<div class="msg error">${escapeHtml(parsed.error.message)}${parsed.error.line ? ` (line ${parsed.error.line})` : ''}</div>`;
-    if (parsed.error.line) ruleEd.markError(parsed.error.line);
-    return;
-  }
+  if (parsed.error) { showRuleError(msgs, ruleEd, parsed.error); return; }
   running = true;
   $('run').disabled = true;
   $('results').innerHTML = '<div class="msg">running…</div>';
@@ -138,10 +126,9 @@ function showResult(g, res, warnings) {
   if (warnings && warnings.length) out.push(`<div class="msg warn">${warnings.map(escapeHtml).join('<br>')}</div>`);
   if (g.status === 'error') {
     out.push(`<div class="verdict error">Semgrep could not run this rule</div>` + g.errors.map((e) => `<div class="msg error">${escapeHtml(e)}</div>`).join(''));
-    const m = /line (\d+)/.exec(g.errors.join(' '));
     targetEd.clearResult();
     $('results').innerHTML = out.join('');
-    if (m) ruleEd.markError(Number(m[1]));
+    markErrorLine(ruleEd, g.errors);
     return;
   }
   targetEd.showResult(g);
@@ -155,20 +142,16 @@ function showResult(g, res, warnings) {
     if (d.kind === 'fixes') out.push(`<div class="bucket unexpected"><div class="bucket-title">Right lines, wrong fix</div>${d.bad.map((b) => `<div class="line"><span class="ln">${b.line}</span> expected fix <code>${escapeHtml(b.want)}</code> but got <code>${escapeHtml(b.got || '(none)')}</code></div>`).join('')}</div>`);
   }
   if (g.otherIds.length) out.push(`<div class="msg warn">Matches from other rule ids were ignored: ${g.otherIds.map(escapeHtml).join(', ')} — this challenge grades <code>${escapeHtml(ch.rule_id)}</code>.</div>`);
-  if (g.matches.length) {
-    out.push(`<details class="matches"><summary>${g.matches.length} raw match${g.matches.length === 1 ? '' : 'es'}</summary>${g.matches.map((m) => {
-      const s = m.location.start, e = m.location.end;
-      const mv = Object.entries((m.extra && m.extra.metavars) || {}).map(([k, v]) => `<span class="mv"><b>${escapeHtml(k)}</b> = <code>${escapeHtml(v && v.abstract_content !== undefined ? v.abstract_content : JSON.stringify(v))}</code></span>`).join(' ');
-      const rendered = (m.extra && typeof m.extra.fix === 'string') ? m.extra.fix : m.__renderedFix;
-      const fix = rendered !== undefined ? `<div class="fix">fix → <code>${escapeHtml(rendered)}</code></div>` : '';
-      return `<div class="match"><span class="ln">${s.line}:${s.col}–${e.line}:${e.col}</span> <span class="message">${escapeHtml((m.extra && m.extra.message) || '')}</span> ${mv}${fix}</div>`;
-    }).join('')}</details>`);
-  }
+  out.push(renderMatchList(g.matches));
   $('results').innerHTML = out.join('');
 }
 
 $('run').addEventListener('click', run);
 $('reset').addEventListener('click', () => { ruleEd.set(ch.starter); $('rule-messages').innerHTML = ''; $('results').innerHTML = ''; targetEd.clearResult(); ruleEd.focus(); });
+$('open-playground').addEventListener('click', () => {
+  storage.handoff({ lang: 'csharp', rule: ruleEd.get(), files: [{ path: ch.target_path, text: ch.target }] });
+  location.href = 'playground.html';
+});
 $('show-solution').addEventListener('click', () => {
   if (!confirm('Replace your rule with the reference solution? The challenge will count as solved with help.')) return;
   solutionShown = true; storage.usedHelp(ch.id); ruleEd.set(ch.solution);

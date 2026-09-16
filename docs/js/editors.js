@@ -1,5 +1,6 @@
-// CodeMirror 6 editors: YAML rule editor and read-only C# target with expectation/result highlighting.
-import { EditorView, basicSetup, EditorState, StateField, StateEffect, Decoration, RangeSetBuilder, keymap, yaml, csharp, Compartment,
+// CodeMirror 6 editors: YAML rule editor and a target editor (C# or Python, read-only by default) with
+// expectation/result highlighting.
+import { EditorView, basicSetup, EditorState, StateField, StateEffect, Decoration, RangeSetBuilder, keymap, yaml, csharp, python, Compartment,
   gutter, GutterMarker } from '../vendor/editor.bundle.js';
 
 import { themeExtension } from './themes.js';
@@ -103,18 +104,40 @@ const dojoGutter = gutter({
   lineMarkerChange: (u) => u.transactions.some((t) => t.effects.some((e) => e.is(setMarkers))),
 });
 
-export function createTargetEditor(parent, text) {
+const TARGET_MODES = { csharp, python };
+const EMPTY = { classes: {}, markers: {} };
+
+/**
+ * @param {{language?: 'csharp'|'python', editable?: boolean, onChange?: () => void, onRun?: () => void}} [opts]
+ *   an editable target (the playground) gets its own Mod-Enter binding, placed before basicSetup whose default
+ *   keymap would otherwise insert a blank line; onChange fires after every edit (read the text with get()).
+ */
+export function createTargetEditor(parent, text, { language = 'csharp', editable = false, onChange, onRun } = {}) {
+  const mode = TARGET_MODES[language];
+  const runKey = onRun ? keymap.of([{ key: 'Mod-Enter', run: () => { onRun(); return true; } }]) : [];
   const view = new EditorView({
     parent,
     state: EditorState.create({
       doc: text,
-      extensions: [basicSetup, csharp(), layoutExt, colourExt(), EditorState.readOnly.of(true), EditorView.editable.of(false), lineClassField, markersField, dojoGutter],
+      extensions: [runKey, basicSetup, mode ? mode() : [], layoutExt, colourExt(),
+        editable ? [] : [EditorState.readOnly.of(true), EditorView.editable.of(false)],
+        onChange ? EditorView.updateListener.of((u) => { if (u.docChanged) onChange(); }) : [],
+        lineClassField, markersField, dojoGutter],
     }),
   });
   liveViews.add(view);
+  let base = EMPTY; // the expectation markers a challenge paints under every result
+  const paint = (classes, markers) => view.dispatch({ effects: [setLineClasses.of(classes), setMarkers.of(markers)] });
+  const range = (m) => (m.location ? [m.location.start, m.location.end] : [m.start, m.end]);
   return {
     view,
     destroy() { liveViews.delete(view); view.destroy(); },
+    get: () => view.state.doc.toString(),
+    /** Replace the whole text and drop every highlight (a full replace would otherwise keep decorations at offset 0). */
+    set(t) {
+      base = EMPTY;
+      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: t }, effects: [setLineClasses.of({}), setMarkers.of({})] });
+    },
     /** expectations: {expected:number[], ok:number[], todo:number[], annotations:number[], ranges:{line,endLine}[]} */
     showExpectations({ expected = [], ok = [], todo = [], annotations = [], ranges = [] }) {
       const classes = {}, markers = {};
@@ -124,15 +147,14 @@ export function createTargetEditor(parent, text) {
       for (const l of ok) { classes[l] = 'cm-line-ok'; markers[l] = { symbol: '○', cls: 'ok', title: 'must NOT match' }; }
       for (const l of todo) { classes[l] = 'cm-line-todo'; markers[l] = { symbol: '◌', cls: 'todo', title: 'expected in current Semgrep, known gap in the browser engine' }; }
       for (const l of expected) { classes[l] = 'cm-line-expected'; markers[l] = { symbol: '▶', cls: 'expected', title: 'must match' }; }
-      view.dispatch({ effects: [setLineClasses.of(classes), setMarkers.of(markers)] });
-      this._base = { classes, markers };
+      paint(classes, markers);
+      base = { classes, markers };
     },
-    /** result: {matchedLines, missed, unexpected, unexpectedOk} */
+    /** result: {matchedLines, missed, unexpected, unexpectedOk} — graded against the expectations */
     showResult(result) {
-      const classes = { ...(this._base ? this._base.classes : {}) };
-      const markers = { ...(this._base ? this._base.markers : {}) };
+      const classes = { ...base.classes }, markers = { ...base.markers };
       for (const m of result.matches || []) {
-        const s = m.location ? m.location.start : m.start, e = m.location ? m.location.end : m.end;
+        const [s, e] = range(m);
         const cls = result.unexpected.includes(s.line) ? 'cm-line-unexpected-body' : 'cm-line-matched-body';
         for (let l = s.line + 1; l <= e.line; l++) if (!classes[l] || /-body$/.test(classes[l]) || classes[l] === 'cm-line-expected-body') classes[l] = cls;
       }
@@ -143,11 +165,25 @@ export function createTargetEditor(parent, text) {
                          : { symbol: '✔', cls: 'matched', title: 'matched as expected' };
       }
       for (const l of result.missed) { classes[l] = 'cm-line-missed'; markers[l] = { symbol: '▷', cls: 'missed', title: 'expected but not matched' }; }
-      view.dispatch({ effects: [setLineClasses.of(classes), setMarkers.of(markers)] });
+      paint(classes, markers);
       const first = result.missed[0] || result.unexpected[0] || result.matchedLines[0];
       if (first) centerLine(view, first);
     },
-    clearResult() { if (this._base) view.dispatch({ effects: [setLineClasses.of(this._base.classes), setMarkers.of(this._base.markers)] }); },
+    /** Neutral highlighting of engine matches (no expectations): ● on each start line, the rest of the range shaded. */
+    showMatches(matches) {
+      const classes = {}, markers = {};
+      let first = 0;
+      for (const m of matches || []) {
+        const [s, e] = range(m);
+        for (let l = s.line + 1; l <= e.line; l++) if (!classes[l]) classes[l] = 'cm-line-matched-body';
+        classes[s.line] = 'cm-line-matched';
+        markers[s.line] = { symbol: '●', cls: 'matched', title: 'match' };
+        if (!first || s.line < first) first = s.line;
+      }
+      paint(classes, markers);
+      if (first) centerLine(view, first);
+    },
+    clearResult() { paint(base.classes, base.markers); },
     scrollToLine(n) { centerLine(view, n); },
   };
 }

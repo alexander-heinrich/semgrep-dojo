@@ -7,5 +7,6 @@ export { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 export { tags } from '@lezer/highlight';
 export { yaml } from '@codemirror/lang-yaml';
 export { csharp } from '@replit/codemirror-lang-csharp';
+export { python } from '@codemirror/lang-python';
 export * as jsyaml from 'js-yaml';
 export { marked } from 'marked';

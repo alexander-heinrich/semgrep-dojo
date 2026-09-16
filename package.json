@@ -2,7 +2,7 @@
   "name": "semgrep-dojo",
   "version": "0.1.0",
   "private": true,
-  "description": "Semgrep Dojo \u2014 static C# rule-writing practice site (GitHub Pages)",
+  "description": "Semgrep Dojo — static C# rule-writing practice site (GitHub Pages)",
   "type": "module",
   "scripts": {
     "vendor": "node scripts/vendor.mjs",
@@ -11,6 +11,7 @@
     "serve": "sh scripts/serve.sh"
   },
   "devDependencies": {
+    "@codemirror/lang-python": "^6.2.1",
     "@codemirror/lang-yaml": "^6.1.2",
     "@codemirror/language": "^6.10.0",
     "@codemirror/state": "^6.4.0",

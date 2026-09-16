@@ -1,5 +1,6 @@
 // Per-browser progress in localStorage (guarded: private mode / blocked storage → in-memory only).
 const KEY = 'semgrep-dojo.v1';
+const HANDOFF_KEY = 'semgrep-dojo.playground.handoff';
 let mem = null;
 
 function read() {
@@ -48,4 +49,13 @@ export const storage = {
     return v;
   },
   reset() { mem = { progress: {}, settings: {} }; write(); },
+  /** Rule + files handed from a challenge to the playground (sessionStorage): call with a value to store it, without one to take it. */
+  handoff(v) {
+    try {
+      if (v !== undefined) { sessionStorage.setItem(HANDOFF_KEY, JSON.stringify(v)); return true; }
+      const raw = sessionStorage.getItem(HANDOFF_KEY);
+      if (raw !== null) sessionStorage.removeItem(HANDOFF_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return v !== undefined ? false : null; }
+  },
 };

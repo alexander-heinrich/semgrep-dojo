@@ -10,7 +10,7 @@
 <body>
 <header class="top">
   <div class="brand"><a href="./">🥋 Semgrep Dojo</a></div>
-  <nav><a href="./">Challenges</a><a href="https://github.com/alexander-heinrich/semgrep-dojo">GitHub</a></nav>
+  <nav><a href="./">Challenges</a><a href="playground.html">Playground</a><a href="https://github.com/alexander-heinrich/semgrep-dojo">GitHub</a></nav>
 </header>
 <main class="home">
   <h1>About</h1>
@@ -26,13 +26,27 @@
   <p>Your rule runs locally on a WebAssembly build of the Semgrep OSS engine (js_of_ocaml + emscripten), built from the
      source tree at tag <code>v1.81.0</code> (July 2024) — the last release that still contains the browser build tooling,
      which Semgrep later moved into its proprietary repository. The C# and Python parsers come from the same build (Python
-     is only needed for <code>metavariable-comparison</code>). Nothing is sent to a server.</p>
-  <p>The build, its recipe and its verification suites are in <a href="https://github.com/alexander-heinrich/Semgrep-WASM">Semgrep-WASM</a>. For C#, the only language this site runs, the
+     serves <code>metavariable-comparison</code>, whose expressions are parsed as Python, and the playground's Python mode).
+     Nothing is sent to a server.</p>
+  <p>The build, its recipe and its verification suites are in <a href="https://github.com/alexander-heinrich/Semgrep-WASM">Semgrep-WASM</a>. For C#, the language the challenges grade, the
      build behaves exactly like Semgrep 1.172.0 on every probe we ran: the rule-syntax operators, taint mode, autofix and
      message rendering, and C# 9 to 14 syntax samples. All challenges are validated against a current Semgrep CLI when the
      site is built, and a parity script confirms the browser engine agrees for every one of them. The rule-syntax half of that
      evidence is largely language-independent; the parser half is verified for C# alone. Two years of newer releases are still
      missing, so if you find a rule that behaves differently, the CLI result is the reference.</p>
+
+  <h2 id="playground">The playground</h2>
+  <p>The <a href="playground.html">playground</a> runs a rule on code you bring yourself: drop files or a folder, pick them, or
+     type into a new file. Every file can be edited in place; matches are marked with ● and listed per file. There is no grading
+     and no progress — it is the free sparring after the kata. The files live in the tab only (the rule text and the language are
+     remembered in your browser); nothing is uploaded, just as with the challenges. Up to 200 files of 1 MB each are accepted;
+     binary files and the folders <code>.git</code>, <code>node_modules</code>, <code>bin</code>, <code>obj</code>,
+     <code>__pycache__</code>, <code>.venv</code> and <code>venv</code> are skipped.
+     A folder drop keeps the relative paths, which is what a rule's <code>paths:</code> filters see.</p>
+  <p>Besides C# the playground also parses <strong>Python</strong>. That mode rests on a smaller footing: the Python parser is
+     covered by a handful of smoke tests in Semgrep-WASM (checked against the same CLI), not by the C# semantics suite and probes
+     described above. Rules whose <code>languages:</code> do not name the selected language are skipped by the engine without an
+     error, so the page warns when that would leave nothing to run.</p>
 
   <h2>Practicing from the terminal</h2>
   <pre>git clone https://github.com/alexander-heinrich/semgrep-dojo && cd semgrep-dojo

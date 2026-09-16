@@ -6,12 +6,16 @@ const TOP_LEVEL_KEYS = new Set(['id', 'message', 'severity', 'languages', 'mode'
   'options', 'fix', 'fix-regex', 'category', 'pattern', 'patterns', 'pattern-either', 'pattern-regex', 'pattern-sources', 'pattern-sinks',
   'pattern-sanitizers', 'pattern-propagators', 'r2c-internal-project-depends-on', 'validators']);
 const PATTERN_KEYS = ['pattern', 'patterns', 'pattern-either', 'pattern-regex'];
+const LANG_ALIASES = { 'c#': 'csharp', cs: 'csharp', py: 'python', py3: 'python', python3: 'python' };
+const normLang = (l) => { const k = String(l).toLowerCase(); return LANG_ALIASES[k] || k; };
 
 /**
  * @param {string} text  YAML typed by the learner
+ * @param {{language?: string}} [opts]  the engine language the rules will run as (default csharp); rules without
+ *   `languages:` get it, and a rule list that never names it draws a warning because the engine would skip every rule
  * @returns {{rules: object[]|null, error: {message:string, line?:number}|null, warnings: string[]}}
  */
-export function parseRuleYaml(text) {
+export function parseRuleYaml(text, { language = 'csharp' } = {}) {
   const warnings = [];
   if (!text || !text.trim()) return { rules: null, error: { message: "You can't run Semgrep with an empty rule." }, warnings };
   let doc;
@@ -40,8 +44,8 @@ export function parseRuleYaml(text) {
     const rule = { ...r };
     if (!rule.id) { rule.id = `rule-${i + 1}`; warnings.push(`rules[${i}] has no id; using \`${rule.id}\`.`); }
     if (!rule.message) rule.message = `matched ${rule.id}`;
-    if (!rule.languages) { rule.languages = ['csharp']; warnings.push('Added `languages: [csharp]`.'); }
-    rule.languages = rule.languages.map((l) => (String(l).toLowerCase() === 'c#' ? 'csharp' : l));
+    if (!rule.languages) { rule.languages = [language]; warnings.push(`Added \`languages: [${language}]\`.`); }
+    rule.languages = (Array.isArray(rule.languages) ? rule.languages : [rule.languages]).map(normLang); // the engine reads names case-insensitively
     const sev = String(rule.severity || 'WARNING').toUpperCase();
     if (!SEVERITIES.has(sev)) return { rules: null, error: { message: `Unknown severity \`${rule.severity}\` (use ERROR, WARNING, INFO, CRITICAL, HIGH, MEDIUM or LOW).` }, warnings };
     rule.severity = sev;
@@ -51,6 +55,9 @@ export function parseRuleYaml(text) {
     if (mode === 'taint' && !rule['pattern-sources']) return { rules: null, error: { message: `Taint rule \`${rule.id}\` needs \`pattern-sources\` (and usually \`pattern-sinks\`).` }, warnings };
     for (const k of Object.keys(rule)) if (!TOP_LEVEL_KEYS.has(k)) warnings.push(`Unknown top-level key \`${k}\` in rule \`${rule.id}\` (the engine ignores it).`);
     out.push(rule);
+  }
+  if (!out.some((r) => r.languages.includes(language))) {
+    warnings.push(`No rule lists \`${language}\` under \`languages:\`; the engine skips such rules silently, so nothing will match.`);
   }
   return { rules: out, error: null, warnings };
 }

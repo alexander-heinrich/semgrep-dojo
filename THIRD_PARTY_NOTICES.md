@@ -42,7 +42,7 @@ exception), OCaml runtime (LGPL-2.1 with linking exception).
 `docs/vendor/editor.bundle.js` is built by `scripts/vendor.mjs` (esbuild) from these MIT-licensed
 packages (exact versions in `docs/vendor/EDITOR_VERSIONS.md`):
 
-- CodeMirror 6 (`codemirror`, `@codemirror/state`, `@codemirror/view`, `@codemirror/language`, `@codemirror/lang-yaml`) — Copyright (C) 2018-2024 by Marijn Haverbeke and others
+- CodeMirror 6 (`codemirror`, `@codemirror/state`, `@codemirror/view`, `@codemirror/language`, `@codemirror/lang-yaml`, `@codemirror/lang-python`) — Copyright (C) 2018-2024 by Marijn Haverbeke and others
 - `@lezer/*` — Copyright (C) 2018 by Marijn Haverbeke and others
 - `@replit/codemirror-lang-csharp` — Copyright (c) 2023 Replit
 - `js-yaml` — Copyright (C) 2011-2015 by Vitaly Puzrin

@@ -92,7 +92,8 @@ export function renderedFix(m) {
 }
 export function describeError(e) {
   if (typeof e === 'string') return e;
-  const type = e.error_type || e.type || (e.code !== undefined ? 'error ' + e.code : 'error');
+  const t = e.error_type || e.type;
+  const type = (Array.isArray(t) ? t[0] : t) || (e.code !== undefined ? 'error ' + e.code : 'error'); // PartialParsing arrives as [name, spans]
   const msg = e.message || e.long_msg || e.short_msg || JSON.stringify(e);
   const loc = e.location ? ` (line ${e.location.start ? e.location.start.line : '?'})` : '';
   return `${type}: ${msg}${loc}`.replace(/\s+/g, ' ').trim();

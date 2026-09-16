@@ -68,8 +68,8 @@ ol.challenges li a { font-weight: 500; }
 .badge.todo { border-color: var(--muted); color: var(--muted); }
 main.home footer { margin-top: 2.5rem; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--line); padding-top: 1rem; }
 
-/* challenge workspace */
-body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
+/* challenge workspace (the playground reuses it) */
+body.challenge-page, body.playground-page { display: flex; flex-direction: column; height: 100vh; }
 .workspace { display: grid; grid-template-columns: minmax(300px, 34%) 1fr; flex: 1; min-height: 0; }
 .pane { min-height: 0; overflow: auto; }
 .instructions { padding: 1rem 1.2rem 2rem; border-right: 1px solid var(--line); background: var(--card); }
@@ -123,6 +123,34 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
 .match .mv { margin-left: .5em; }
 .match .fix { margin-left: 4em; color: var(--muted); }
 
+/* playground */
+.files { padding: 1rem 1.2rem 2rem; border-right: 1px solid var(--line); background: var(--card); display: flex; flex-direction: column; gap: .6rem; }
+.files h1 { font-size: 1.35rem; margin: .3em 0 0; }
+.files .lead { margin: 0; color: var(--muted); font-size: .9rem; }
+.dropzone { border: 2px dashed var(--line); border-radius: 10px; padding: .9rem; text-align: center; transition: border-color .15s, background .15s; }
+.dropzone.dragover { border-color: var(--accent); background: var(--exp); }
+.dropzone .drop-hint { color: var(--muted); font-size: .9rem; margin-bottom: .6rem; }
+.dropzone .actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; }
+.filelist-head { display: flex; align-items: center; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-top: .4rem; }
+.filelist { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.filelist li { display: flex; align-items: center; gap: .4rem; border-bottom: 1px solid var(--line); }
+.filelist li.active { background: var(--exp); }
+.filelist .name { flex: 1; min-width: 0; text-align: left; background: none; border: none; border-radius: 0; padding: .35em .4em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filelist .count { font-size: .72rem; padding: .05em .55em; border-radius: 999px; background: var(--matched); color: var(--pass); font-weight: 600; }
+.filelist .count.zero { background: var(--code-bg); color: var(--muted); font-weight: 400; }
+.filelist .count.stale { background: var(--missed); color: var(--warn); font-weight: 500; }
+.filelist .remove { background: none; border: none; color: var(--muted); padding: .2em .5em; }
+.filelist .remove:hover { color: var(--fail); }
+.files .fineprint { font-size: .78rem; color: var(--muted); margin: .4rem 0 0; }
+.toolbar select, .toolbar input.name { font: inherit; font-size: .85rem; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: .2em .5em; }
+.toolbar input.name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; min-width: 0; flex: 0 1 28em; }
+.toolbar input.name:disabled { opacity: .6; }
+.summary { font-weight: 600; padding: .45em .7em; border-radius: 6px; margin-bottom: .5em; }
+.summary.hit { background: var(--matched); color: var(--pass); }
+.summary.none { background: var(--code-bg); color: var(--muted); }
+.match .path { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; color: var(--accent); }
+.match.more { color: var(--muted); }
+
 /* CodeMirror decorations */
 .cm-line-annotation { color: var(--muted); opacity: .75; }
 .cm-line-expected { background: var(--exp); }
@@ -157,10 +185,15 @@ body.challenge-page { display: flex; flex-direction: column; height: 100vh; }
   ol.challenges li { display: grid; grid-template-columns: auto 1fr; column-gap: .6rem; row-gap: .25rem; align-items: baseline; }
   ol.challenges li .dots, ol.challenges li .tags, ol.challenges li .badge { grid-column: 2; }
   /* challenge page: one column that scrolls as a page */
-  body.challenge-page { height: auto; }
+  body.challenge-page, body.playground-page { height: auto; }
   .workspace { grid-template-columns: 1fr; }
   .instructions { border-right: none; border-bottom: 1px solid var(--line); max-height: none; padding: .8rem 1rem 1.2rem; }
   .instructions h1 { font-size: 1.25rem; }
+  .files { border-right: none; border-bottom: 1px solid var(--line); padding: .8rem 1rem 1rem; }
+  .files h1 { font-size: 1.25rem; }
+  .filelist { max-height: 30vh; overflow: auto; }
+  .phone-hidden { display: none; }
+  .toolbar input.name { flex: 1 1 10em; }
   .editor-block.rule { height: 280px; }
   .editor-block.target { height: min(480px, 60vh); order: 2; }
   /* the verdict goes between the rule and the target instead of below a full-height editor */

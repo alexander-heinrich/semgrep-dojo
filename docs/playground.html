@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  // iOS Safari zooms the page when an editable element with text smaller than 16px gets focus. A
+  // maximum-scale hint turns that off while (since iOS 10) still allowing pinch-zoom; on Android it
+  // would disable pinch-zoom, so apply it to iOS only (iPadOS reports itself as a Mac with touch).
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+    document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1');
+</script>
+<title>Playground — Semgrep Dojo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥋</text></svg>">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body class="playground-page">
+<header class="top">
+  <div class="brand"><a href="./">🥋 Semgrep Dojo</a><span class="sub">playground</span></div>
+  <nav>
+    <a href="./">Challenges</a>
+    <a href="about.html#playground" class="phone-hidden">About</a>
+    <span id="engine-status" class="pill" title="browser engine status">engine: idle</span>
+  </nav>
+</header>
+<main class="workspace">
+  <aside class="pane files" id="files-pane">
+    <h1>Playground</h1>
+    <p class="lead">Run a rule on your own code. The files stay in this tab — nothing is uploaded anywhere.</p>
+    <div id="dropzone" class="dropzone">
+      <div class="drop-hint">Drop files or a folder here</div>
+      <div class="actions">
+        <button id="pick-files">Pick files…</button>
+        <button id="pick-dir">Pick a folder…</button>
+        <button id="new-file">New file</button>
+      </div>
+      <input id="file-input" type="file" multiple class="hidden">
+      <input id="dir-input" type="file" webkitdirectory class="hidden">
+    </div>
+    <div id="file-messages" class="messages"></div>
+    <div class="filelist-head"><span id="file-count">no files yet</span><button id="clear-files" class="link hidden">Clear all</button></div>
+    <ul id="filelist" class="filelist"></ul>
+    <p class="fineprint">Up to 200 files of 1 MB each; binary files and the folders <code id="skip-list"></code> are skipped.
+       Every file can be edited in place; its name is what the rule's <code>paths:</code> see.</p>
+  </aside>
+  <section class="pane editors">
+    <div class="editor-block rule">
+      <div class="toolbar">
+        <span class="label">rule.yaml</span>
+        <select id="lang" title="the language the files are parsed as">
+          <option value="csharp">C#</option>
+          <option value="python">Python</option>
+        </select>
+        <span class="spacer"></span>
+        <button id="run" class="primary" title="Ctrl/Cmd + Enter">▶ Run</button>
+        <button id="stop" class="hidden" title="abort the run and restart the engine">Stop</button>
+        <button id="reset" title="replace the rule with the sample rule for this language">Sample rule</button>
+      </div>
+      <div id="rule-editor" class="editor"></div>
+      <div id="rule-messages" class="messages"></div>
+    </div>
+    <div class="editor-block target">
+      <div class="toolbar">
+        <input id="target-name" class="name" spellcheck="false" autocomplete="off" placeholder="no file selected" title="file name, as the rule's paths: see it">
+        <button id="remove-file" class="link" title="remove this file">remove</button>
+        <span class="spacer"></span>
+        <span class="legend"><span class="legend-item"><span class="dojo-marker matched">●</span> match</span></span>
+      </div>
+      <div id="target-editor" class="editor"></div>
+    </div>
+    <div id="results" class="results"></div>
+  </section>
+</main>
+<script type="module" src="js/app-playground.js"></script>
+</body>
+</html>

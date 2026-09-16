@@ -2,6 +2,7 @@
 
 Built by scripts/vendor.mjs (esbuild) from:
 
+- @codemirror/lang-python@6.2.1
 - @codemirror/lang-yaml@6.1.3
 - @codemirror/language@6.12.4
 - @codemirror/state@6.7.2

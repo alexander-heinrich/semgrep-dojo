@@ -34,6 +34,14 @@ python3 scripts/check.py challenges/csharp/1-basics/07-any-depth --solution
 Every challenge works both ways; the terminal path uses whatever `semgrep` (or Opengrep, see below) is
 on your `PATH`.
 
+## Playground (your own files)
+
+`docs/playground.html` runs a rule on files you bring yourself: drop files or a folder, pick them, or
+type into a new file. Files can be edited in place, matches are marked per file, and **Open in
+playground** on any challenge carries its rule and target over. There is no grading; the files live in
+the tab only, the rule text and the chosen language in localStorage. Besides C# the playground parses
+Python, whose parser is covered by a small smoke suite in Semgrep-WASM rather than the full C# evidence.
+
 ## Repository layout
 
 | path | what |
@@ -48,6 +56,7 @@ on your `PATH`.
 | `scripts/update_engine.sh` | refreshes the vendored engine from a checkout of Semgrep-WASM |
 | `scripts/vendor.mjs` | rebuild the CodeMirror editor bundle |
 | `docs/` | the static site (served by GitHub Pages from `main` / `docs`) |
+| `docs/playground.html`, `docs/js/app-playground.js` | the playground; shares the editors, engine client, rule parser and match renderer (`docs/js/results.js`) with the challenge page |
 
 ## Building and testing
 
@@ -55,8 +64,9 @@ on your `PATH`.
 npm install                      # only for scripts/vendor.mjs and wasm_parity (js-yaml for ad-hoc runs)
 python3 scripts/build.py         # validate all challenges, emit docs/data/challenges.json
 node scripts/wasm_parity.mjs     # browser-engine parity for every challenge
-node scripts/network_check.mjs   # confirms a rule run makes no external requests
-node scripts/browser-test.mjs --all   # headless Chrome end-to-end (needs Google Chrome installed)
+node scripts/network_check.mjs   # confirms a rule run makes no external requests (--playground: same for the playground)
+node scripts/browser-test.mjs --all   # headless Chrome end-to-end, challenges + playground (needs Google Chrome installed)
+node scripts/browser-test.mjs --playground   # the playground alone
 sh scripts/serve.sh              # http://127.0.0.1:8000/
 ```
 
@@ -81,8 +91,10 @@ with the current Semgrep release live in a separate repository:
 refreshes it from a sibling checkout, verifies the checksums and records the source revision in
 `docs/vendor/semgrep/SOURCE`.
 
-Every check in that repository runs on C#, the only language the site exposes; the same challenges also
-pass unchanged on Opengrep 1.29.0. Everything is LGPL-2.1 and unmodified; see `THIRD_PARTY_NOTICES.md`.
+Every check in that repository runs on C#, the language the challenges grade; the playground's Python mode
+rests on a small smoke suite there. `docs/vendor/semgrep/SOURCE` names the vendored revision (`v1.81.0-3`,
+whose worker takes a language and several targets per run). The same challenges also pass unchanged on
+Opengrep 1.29.0. Everything is LGPL-2.1 and unmodified; see `THIRD_PARTY_NOTICES.md`.
 
 ## License
 
