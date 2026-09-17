@@ -53,6 +53,7 @@ suites in Semgrep-WASM rather than the full C# evidence.
 | `scripts/wasm_parity.mjs` | runs every solution through the browser engine (Node build) and compares with the CLI result |
 | `scripts/network_check.mjs` | records every request a rule run makes and fails if any leaves the local origin |
 | `scripts/browser-test.mjs` | end-to-end check in headless Chrome over the DevTools protocol |
+| `scripts/webkit-test.mjs` | the playground and a challenge in WebKit through Playwright, when it is installed |
 | `scripts/fetch_snippet.py` | fetches a file from GitHub at a pinned commit and prints attribution blocks for authoring |
 | `scripts/update_engine.sh` | refreshes the vendored engine from a checkout of Semgrep-WASM |
 | `scripts/vendor.mjs` | rebuild the CodeMirror editor bundle |
@@ -68,6 +69,7 @@ node scripts/wasm_parity.mjs     # browser-engine parity for every challenge
 node scripts/network_check.mjs   # confirms a rule run makes no external requests (--playground: same for the playground)
 node scripts/browser-test.mjs --all   # headless Chrome end-to-end, challenges + playground (needs Google Chrome installed)
 node scripts/browser-test.mjs --playground   # the playground alone
+node scripts/webkit-test.mjs     # the same pages in WebKit (opt-in: npm install --no-save playwright && npx playwright install webkit)
 sh scripts/serve.sh              # http://127.0.0.1:8000/
 ```
 
