@@ -11,6 +11,7 @@
     "serve": "sh scripts/serve.sh"
   },
   "devDependencies": {
+    "@codemirror/lang-cpp": "^6.0.3",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/lang-yaml": "^6.1.2",
     "@codemirror/language": "^6.10.0",

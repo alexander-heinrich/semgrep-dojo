@@ -1,6 +1,6 @@
 // CodeMirror 6 editors: YAML rule editor and a target editor (C# or Python, read-only by default) with
 // expectation/result highlighting.
-import { EditorView, basicSetup, EditorState, StateField, StateEffect, Decoration, RangeSetBuilder, keymap, yaml, csharp, python, Compartment,
+import { EditorView, basicSetup, EditorState, StateField, StateEffect, Decoration, RangeSetBuilder, keymap, yaml, csharp, python, cpp, Compartment,
   gutter, GutterMarker } from '../vendor/editor.bundle.js';
 
 import { themeExtension } from './themes.js';
@@ -104,11 +104,11 @@ const dojoGutter = gutter({
   lineMarkerChange: (u) => u.transactions.some((t) => t.effects.some((e) => e.is(setMarkers))),
 });
 
-const TARGET_MODES = { csharp, python };
+const TARGET_MODES = { csharp, python, cpp };
 const EMPTY = { classes: {}, markers: {} };
 
 /**
- * @param {{language?: 'csharp'|'python', editable?: boolean, onChange?: () => void, onRun?: () => void}} [opts]
+ * @param {{language?: 'csharp'|'python'|'cpp', editable?: boolean, onChange?: () => void, onRun?: () => void}} [opts]
  *   an editable target (the playground) gets its own Mod-Enter binding, placed before basicSetup whose default
  *   keymap would otherwise insert a blank line; onChange fires after every edit (read the text with get()).
  */

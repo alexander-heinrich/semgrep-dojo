@@ -25,9 +25,9 @@
   <h2 id="engine">How rules run in the browser</h2>
   <p>Your rule runs locally on a WebAssembly build of the Semgrep OSS engine (js_of_ocaml + emscripten), built from the
      source tree at tag <code>v1.81.0</code> (July 2024) — the last release that still contains the browser build tooling,
-     which Semgrep later moved into its proprietary repository. The C# and Python parsers come from the same build (Python
-     serves <code>metavariable-comparison</code>, whose expressions are parsed as Python, and the playground's Python mode).
-     Nothing is sent to a server.</p>
+     which Semgrep later moved into its proprietary repository. The C#, Python and C++ parsers come from the same build
+     (Python also serves <code>metavariable-comparison</code>, whose expressions are parsed as Python; the C++ parser is
+     fetched the first time you pick C++ in the playground). Nothing is sent to a server.</p>
   <p>The build, its recipe and its verification suites are in <a href="https://github.com/alexander-heinrich/Semgrep-WASM">Semgrep-WASM</a>. For C#, the language the challenges grade, the
      build behaves exactly like Semgrep 1.172.0 on every probe we ran: the rule-syntax operators, taint mode, autofix and
      message rendering, and C# 9 to 14 syntax samples. All challenges are validated against a current Semgrep CLI when the
@@ -43,9 +43,9 @@
      binary files and the folders <code>.git</code>, <code>node_modules</code>, <code>bin</code>, <code>obj</code>,
      <code>__pycache__</code>, <code>.venv</code> and <code>venv</code> are skipped.
      A folder drop keeps the relative paths, which is what a rule's <code>paths:</code> filters see.</p>
-  <p>Besides C# the playground also parses <strong>Python</strong>. That mode rests on a smaller footing: the Python parser is
-     covered by a handful of smoke tests in Semgrep-WASM (checked against the same CLI), not by the C# semantics suite and probes
-     described above. Rules whose <code>languages:</code> do not name the selected language are skipped by the engine without an
+  <p>Besides C# the playground also parses <strong>Python</strong> and <strong>C++</strong> (the C++ parser reads C as well).
+     Those modes rest on a smaller footing: their parsers are covered by a handful of smoke tests each in Semgrep-WASM (checked
+     against the same CLI), not by the C# semantics suite and probes described above. Rules whose <code>languages:</code> do not name the selected language are skipped by the engine without an
      error, so the page warns when that would leave nothing to run.</p>
 
   <h2>Practicing from the terminal</h2>

@@ -6,7 +6,8 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -21,7 +22,9 @@ const doChallenges = !args.includes('--playground') || args.includes('--all') ||
 const ids = !doChallenges ? [] : args.includes('--all') ? data.challenges.filter((c) => c.wasm !== 'cli-only').map((c) => c.id) : [onlyId || data.challenges[0].id];
 
 const server = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1', '-d', path.join(root, 'docs')], { stdio: 'ignore' });
-const browser = spawn(chrome, ['--headless=new', '--disable-gpu', '--no-sandbox', `--remote-debugging-port=${cdpPort}`, '--user-data-dir=/tmp/claude-dojo-profile', 'about:blank'], { stdio: 'ignore' });
+// a fresh profile every run: Chrome's heuristic caching could otherwise serve a vendored file replaced minutes ago
+const profile = mkdtempSync(path.join(os.tmpdir(), 'dojo-browser-test-'));
+const browser = spawn(chrome, ['--headless=new', '--disable-gpu', '--no-sandbox', `--remote-debugging-port=${cdpPort}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 let ws, id = 0; const pending = new Map();
 const send = (method, params = {}) => new Promise((resolve, reject) => { const i = ++id; pending.set(i, { resolve, reject }); ws.send(JSON.stringify({ id: i, method, params })); });
 const evaluate = async (expression) => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) throw new Error('page exception: ' + (r.exceptionDetails.exception && r.exceptionDetails.exception.description || JSON.stringify(r.exceptionDetails)).slice(0, 400)); return r.result.value; };
@@ -123,6 +126,16 @@ try {
     await evaluate(`__playground.addFile('legacy/Old.cs', ${JSON.stringify(cs)}); __playground.run()`);
     check(await evaluate(`/does not end in \\.py/.test(document.getElementById('results').textContent)`), 'extension mismatch hinted');
     await evaluate(`__playground.removeFile(1)`);
+    // C++: the parser loads on demand, a header counts as C++
+    const cppText = '#include <cstdio>\n\nvoid greet(const char* name) {\n    printf(name);\n    printf("%s\\n", name);\n}\n';
+    const cppRule = 'rules:\n  - id: fmt\n    languages: [cpp]\n    severity: WARNING\n    message: format string\n    pattern: printf($FMT)\n';
+    await evaluate(`__playground.setLang('cpp'); __playground.clearFiles(); __playground.addFile('src/greet.cpp', ${JSON.stringify(cppText)}); __playground.addFile('include/greet.h', 'void greet(const char* name);\\n'); __playground.ruleEd.set(${JSON.stringify(cppRule)}); __playground.run()`);
+    check(/^● 1 match in 1 of 2 files/.test(await summary()), `C++ rule matches with the parser loaded on demand (${(await summary()).slice(0, 60)})`);
+    check(!(await evaluate(`/not end in/.test(document.getElementById('results').textContent)`)), 'a header counts as a C++ file');
+    check((await evaluate(`[...document.querySelectorAll('#filelist .count')].map((e) => e.textContent).join(',')`)) === '1,0', 'per-file counts for C++');
+    await evaluate(`__playground.engine.prefetchLanguage('cpp')`); // the pill reports the prefetch until it is done
+    check(await evaluate(`__playground.engine.status === 'ready' && /engine: ready/.test(document.getElementById('engine-status').textContent)`), 'engine pill back to ready after the on-demand load');
+    await evaluate(`__playground.setLang('python'); __playground.clearFiles(); __playground.addFile('pkg/app.py', ${JSON.stringify(py)})`);
     // a rule for the other language is skipped by the engine: the page must say so
     await evaluate(`__playground.ruleEd.set(${JSON.stringify(csRule)}); __playground.run()`);
     check(await evaluate(`/No rule lists/.test((document.querySelector('#results .msg.warn') || {}).textContent || '')`), 'language mismatch warned');
@@ -148,6 +161,6 @@ try {
   if (consoleErrors.length) { console.log('console errors:'); consoleErrors.forEach((e) => console.log('   ' + String(e).slice(0, 300))); }
   check(consoleErrors.length === 0, 'no console errors');
 } catch (e) { console.log('ERROR', e.message || e); failures++; }
-finally { browser.kill(); server.kill(); }
+finally { browser.kill(); server.kill(); setTimeout(() => rmSync(profile, { recursive: true, force: true }), 500); }
 console.log(failures ? `\n${failures} failure(s)` : '\nall browser checks passed');
 process.exit(failures ? 1 : 0);

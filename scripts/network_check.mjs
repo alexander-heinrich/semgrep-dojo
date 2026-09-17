@@ -7,7 +7,8 @@
 // Usage: node scripts/network_check.mjs [--id SUBSTRING] [--playground] [--verbose]      (needs Google Chrome)
 // --playground opens the playground instead and runs its sample rule on the sample file.
 import { spawn } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,9 +26,10 @@ const ch = idArg ? data.challenges.find((c) => c.id.includes(idArg)) : data.chal
 if (!ch) { console.error(`no challenge matching "${idArg}"`); process.exit(2); }
 
 const server = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1', '-d', path.join(root, 'docs')], { stdio: 'ignore' });
+const profile = mkdtempSync(path.join(os.tmpdir(), 'dojo-netcheck-')); // fresh cache every run
 const browser = spawn(chrome, ['--headless=new', '--disable-gpu', '--no-sandbox', `--remote-debugging-port=${cdpPort}`,
-  '--user-data-dir=/tmp/claude-dojo-netcheck', 'about:blank'], { stdio: 'ignore' });
-const stop = (code) => { server.kill(); browser.kill(); process.exit(code); };
+  `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+const stop = (code) => { server.kill(); browser.kill(); setTimeout(() => { rmSync(profile, { recursive: true, force: true }); process.exit(code); }, 500); };
 
 try {
   let targets;

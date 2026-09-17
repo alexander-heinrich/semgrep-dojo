@@ -6,7 +6,7 @@ const TOP_LEVEL_KEYS = new Set(['id', 'message', 'severity', 'languages', 'mode'
   'options', 'fix', 'fix-regex', 'category', 'pattern', 'patterns', 'pattern-either', 'pattern-regex', 'pattern-sources', 'pattern-sinks',
   'pattern-sanitizers', 'pattern-propagators', 'r2c-internal-project-depends-on', 'validators']);
 const PATTERN_KEYS = ['pattern', 'patterns', 'pattern-either', 'pattern-regex'];
-const LANG_ALIASES = { 'c#': 'csharp', cs: 'csharp', py: 'python', py3: 'python', python3: 'python' };
+const LANG_ALIASES = { 'c#': 'csharp', cs: 'csharp', py: 'python', py3: 'python', python3: 'python', 'c++': 'cpp', cxx: 'cpp' };
 const normLang = (l) => { const k = String(l).toLowerCase(); return LANG_ALIASES[k] || k; };
 
 /**

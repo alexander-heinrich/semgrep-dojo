@@ -16,6 +16,7 @@ tooling (js_of_ocaml 5.7.2, emscripten 3.1.51):
 | `engine-1.81.0.mjs`, `engine-1.81.0.cjs` | `js/engine` (`dist/index.mjs`, `dist/index.cjs`) |
 | `csharp-1.81.0.mjs`, `csharp-1.81.0.cjs`, `csharp-1.81.0.wasm` | `js/languages/csharp` (`dist/index.*`, `dist/semgrep-parser.wasm`) |
 | `python-1.81.0.mjs`, `python-1.81.0.cjs`, `python-1.81.0.wasm` | `js/languages/python` |
+| `cpp-1.81.0.mjs`, `cpp-1.81.0.cjs`, `cpp-1.81.0.wasm` | `js/languages/cpp` (also parses C) |
 
 Copyright (c) Semgrep, Inc. — licensed under the GNU Lesser General Public License v2.1. The complete
 licence text is in `docs/vendor/semgrep/LICENSE`, as published with the source at that tag.
@@ -42,7 +43,7 @@ exception), OCaml runtime (LGPL-2.1 with linking exception).
 `docs/vendor/editor.bundle.js` is built by `scripts/vendor.mjs` (esbuild) from these MIT-licensed
 packages (exact versions in `docs/vendor/EDITOR_VERSIONS.md`):
 
-- CodeMirror 6 (`codemirror`, `@codemirror/state`, `@codemirror/view`, `@codemirror/language`, `@codemirror/lang-yaml`, `@codemirror/lang-python`) — Copyright (C) 2018-2024 by Marijn Haverbeke and others
+- CodeMirror 6 (`codemirror`, `@codemirror/state`, `@codemirror/view`, `@codemirror/language`, `@codemirror/lang-yaml`, `@codemirror/lang-python`, `@codemirror/lang-cpp`) — Copyright (C) 2018-2024 by Marijn Haverbeke and others
 - `@lezer/*` — Copyright (C) 2018 by Marijn Haverbeke and others
 - `@replit/codemirror-lang-csharp` — Copyright (c) 2023 Replit
 - `js-yaml` — Copyright (C) 2011-2015 by Vitaly Puzrin

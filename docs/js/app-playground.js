@@ -15,8 +15,9 @@ const engine = new EngineClient('./');
 bindEngineStatus(engine, $('engine-status'));
 
 const LANGS = {
-  csharp: { label: 'C#', ext: '.cs', newName: 'Program.cs' },
-  python: { label: 'Python', ext: '.py', newName: 'main.py' },
+  csharp: { label: 'C#', exts: ['.cs'], newName: 'Program.cs' },
+  python: { label: 'Python', exts: ['.py'], newName: 'main.py' },
+  cpp: { label: 'C++', exts: ['.cpp', '.cc', '.cxx', '.c', '.h', '.hpp', '.hh', '.hxx'], newName: 'main.cpp' },
 };
 // Folders a picker or a drop walks past; the page's fine print is filled from this list.
 const SKIP_DIRS = ['.git', 'node_modules', 'bin', 'obj', '__pycache__', '.venv', 'venv'];
@@ -86,6 +87,36 @@ def main():
     severity: WARNING
     message: shell command built by concatenation — pass an argument list instead
     pattern: os.system("..." + $X)
+`,
+  },
+  cpp: {
+    path: 'src/greet.cpp',
+    text: `#include <cstdio>
+#include <cstring>
+
+void greet(const char* name) {
+    char buf[32];
+    strcpy(buf, name);
+    printf(buf);
+}
+
+void greet_safe(const char* name) {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "hello %s", name);
+    printf("%s\\n", buf);
+}
+
+int main(int argc, char** argv) {
+    if (argc > 1) greet(argv[1]);
+    return 0;
+}
+`,
+    rule: `rules:
+  - id: unbounded-copy
+    languages: [cpp]
+    severity: WARNING
+    message: strcpy has no length limit — use snprintf or strncpy
+    pattern: strcpy(...)
 `,
   },
 };
@@ -189,6 +220,7 @@ function setLang(lang) {
   state.lang = lang;
   $('lang').value = lang;
   storage.setting('playground.lang', lang);
+  engine.prefetchLanguage(lang);
   invalidateResult();
   setActive(state.active); // re-creates the editor in the new language mode, keeps the text
 }
@@ -310,9 +342,10 @@ function renderResults(res, warnings) {
   } else {
     out.push('<div class="verdict error">Semgrep could not run this rule</div>');
   }
-  const { ext, label } = LANGS[state.lang];
-  const foreign = state.files.filter((f) => !f.path.toLowerCase().endsWith(ext)).length;
-  if (foreign) out.push(`<div class="msg warn">${foreign} of ${k} file${k === 1 ? '' : 's'} ${foreign === 1 ? 'does' : 'do'} not end in ${ext}. A file the ${label} parser cannot read yields no matches and, unless it parses partially, no error.</div>`);
+  const { exts, label } = LANGS[state.lang];
+  const foreign = state.files.filter((f) => !exts.some((e) => f.path.toLowerCase().endsWith(e))).length;
+  const extList = exts.length === 1 ? exts[0] : exts.slice(0, -1).join(', ') + ' or ' + exts[exts.length - 1];
+  if (foreign) out.push(`<div class="msg warn">${foreign} of ${k} file${k === 1 ? '' : 's'} ${foreign === 1 ? 'does' : 'do'} not end in ${extList}. A file the ${label} parser cannot read yields no matches and, unless it parses partially, no error.</div>`);
   for (const e of res.errors) out.push(`<div class="msg error">${e.path ? `<b>${escapeHtml(e.path)}</b>: ` : ''}${escapeHtml(describeError(e))}</div>`);
   out.push(renderMatchList(res.matches, { showPath: k > 1 }));
   $('results').innerHTML = out.join('');
@@ -382,7 +415,7 @@ function init() {
   if (h && Array.isArray(h.files)) for (const f of h.files) if (f && typeof f.text === 'string') insertFile(f.path, f.text);
   if (!state.files.length) insertFile(SAMPLE[lang].path, SAMPLE[lang].text);
   setActive(0);
-  engine.load().catch(() => {});
+  engine.load().then(() => engine.prefetchLanguage(state.lang)).catch(() => {});
 }
 init();
 // Debug / test hooks (used by scripts/browser-test.mjs and scripts/network_check.mjs)

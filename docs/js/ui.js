@@ -7,6 +7,7 @@ export function bindEngineStatus(engine, el) {
     el.className = 'pill ' + status;
     if (status === 'downloading') el.textContent = `engine: downloading ${Math.round((progress || 0) * 100)}%`;
     else if (status === 'starting') el.textContent = `engine: starting${stage ? ' (' + stage + ')' : ''}`;
+    else if (status === 'ready' && stage) el.textContent = progress !== undefined && progress < 1 ? `engine: downloading ${stage} parser ${Math.round(progress * 100)}%` : `engine: loading ${stage} parser`;
     else if (status === 'ready') el.textContent = 'engine: ready';
     else if (status === 'fatal') el.textContent = 'engine: failed';
     else el.textContent = 'engine: idle';

@@ -40,7 +40,8 @@ on your `PATH`.
 type into a new file. Files can be edited in place, matches are marked per file, and **Open in
 playground** on any challenge carries its rule and target over. There is no grading; the files live in
 the tab only, the rule text and the chosen language in localStorage. Besides C# the playground parses
-Python, whose parser is covered by a small smoke suite in Semgrep-WASM rather than the full C# evidence.
+Python and C++ (the C++ parser is fetched on demand and reads C too); both are covered by small smoke
+suites in Semgrep-WASM rather than the full C# evidence.
 
 ## Repository layout
 
@@ -91,9 +92,9 @@ with the current Semgrep release live in a separate repository:
 refreshes it from a sibling checkout, verifies the checksums and records the source revision in
 `docs/vendor/semgrep/SOURCE`.
 
-Every check in that repository runs on C#, the language the challenges grade; the playground's Python mode
-rests on a small smoke suite there. `docs/vendor/semgrep/SOURCE` names the vendored revision (`v1.81.0-3`,
-whose worker takes a language and several targets per run). The same challenges also pass unchanged on
+Every check in that repository runs on C#, the language the challenges grade; the playground's Python and
+C++ modes rest on small smoke suites there. `docs/vendor/semgrep/SOURCE` names the vendored revision
+(`v1.81.0-4`, whose worker takes a language and several targets per run and loads the C++ parser on demand). The same challenges also pass unchanged on
 Opengrep 1.29.0. Everything is LGPL-2.1 and unmodified; see `THIRD_PARTY_NOTICES.md`.
 
 ## License

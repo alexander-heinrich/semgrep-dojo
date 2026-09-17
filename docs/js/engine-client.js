@@ -6,6 +6,11 @@ const VENDOR_FILES = [
   ['vendor/semgrep/python-1.81.0.mjs', 3823434],
   ['vendor/semgrep/python-1.81.0.wasm', 425874],
 ];
+// Parsers the worker loads on demand; prefetchLanguage() warms the cache with progress so the first run is quick.
+const LANGUAGE_FILES = {
+  cpp: [['vendor/semgrep/cpp-1.81.0.mjs', 5157751], ['vendor/semgrep/cpp-1.81.0.wasm', 3887500]],
+};
+LANGUAGE_FILES.c = LANGUAGE_FILES.cpp;
 // A run gets 20 s plus 2 s per target file, at most two minutes. A download that makes no progress for a
 // minute, or a worker that does not report ready within a minute of starting, counts as failed.
 const RUN_TIMEOUT_BASE_MS = 20000, RUN_TIMEOUT_PER_FILE_MS = 2000, RUN_TIMEOUT_MAX_MS = 120000;
@@ -21,6 +26,7 @@ export class EngineClient {
     this.status = 'idle'; // idle | downloading | starting | ready | fatal
     this.listeners = new Set();
     this.timings = null;
+    this.prefetched = new Map(); // language → promise of its on-demand files being in the cache
   }
   onStatus(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   _emit(extra = {}) { for (const fn of this.listeners) fn({ status: this.status, ...extra }); }
@@ -28,13 +34,32 @@ export class EngineClient {
   get busy() { return this.pending.size > 0; }
 
   /** Warm the HTTP cache with byte-level progress so the worker's import() is instant. */
-  async prefetch(onProgress) {
-    const total = VENDOR_FILES.reduce((a, [, s]) => a + s, 0);
+  prefetch(onProgress) { return this._fetchAll(VENDOR_FILES, onProgress); }
+
+  /** Warm the cache for a parser that loads on demand; resolves at once for languages that load at start or need no parser. */
+  prefetchLanguage(lang) {
+    const files = LANGUAGE_FILES[lang];
+    if (!files) return Promise.resolve();
+    if (!this.prefetched.has(lang)) {
+      this.prefetched.set(lang, (async () => {
+        await this.load();
+        await this._fetchAll(files, (p) => this._emit({ stage: lang, progress: p }));
+        this._emit();
+      })().catch((e) => {
+        this.prefetched.delete(lang);
+        if (this.status === 'ready') this._emit({ message: String(e.message || e) });
+      }));
+    }
+    return this.prefetched.get(lang);
+  }
+
+  async _fetchAll(files, onProgress) {
+    const total = files.reduce((a, [, s]) => a + s, 0);
     let done = 0, lastProgress = Date.now();
     const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
     const watchdog = setInterval(() => { if (ctrl && Date.now() - lastProgress > STALL_MS) ctrl.abort(); }, 5000);
     try {
-      for (const [rel] of VENDOR_FILES) {
+      for (const [rel] of files) {
         const res = await fetch(this.base + rel, { cache: 'force-cache', signal: ctrl ? ctrl.signal : undefined });
         if (!res.ok) throw new Error(`failed to download ${rel}: HTTP ${res.status}`);
         if (!res.body) continue;
@@ -44,7 +69,7 @@ export class EngineClient {
           if (end) break;
           done += value.length;
           lastProgress = Date.now();
-          onProgress && onProgress(Math.min(1, done / total), rel);
+          onProgress && onProgress(total ? Math.min(1, done / total) : 0, rel);
         }
       }
     } catch (e) {
@@ -96,6 +121,7 @@ export class EngineClient {
           else if (m.type === 'result') {
             const p = this.pending.get(m.id);
             if (p) { clearTimeout(p.timer); this.pending.delete(m.id); p.resolve({ matches: m.matches, errors: m.errors, ms: m.ms }); }
+            this._emit(); // a parser loaded on demand during the run leaves the pill saying so
           } else if (m.type === 'log') console.info('[engine]', m.message);
         };
         this.worker.postMessage({ type: 'init' });
