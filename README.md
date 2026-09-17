@@ -94,7 +94,7 @@ refreshes it from a sibling checkout, verifies the checksums and records the sou
 
 Every check in that repository runs on C#, the language the challenges grade; the playground's Python and
 C++ modes rest on small smoke suites there. `docs/vendor/semgrep/SOURCE` names the vendored revision
-(`v1.81.0-4`, whose worker takes a language and several targets per run and loads the C++ parser on demand). The same challenges also pass unchanged on
+(`v1.81.0-5`, whose worker takes a language and several targets per run and loads the C++ parser on demand). The same challenges also pass unchanged on
 Opengrep 1.29.0. Everything is LGPL-2.1 and unmodified; see `THIRD_PARTY_NOTICES.md`.
 
 ## License

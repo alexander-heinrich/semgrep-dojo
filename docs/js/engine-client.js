@@ -1,14 +1,14 @@
 // Main-thread facade for the engine worker: download progress, lazy start, serialized runs, timeout, cancel.
 const VENDOR_FILES = [
-  ['vendor/semgrep/engine-1.81.0.mjs', 6351287],
-  ['vendor/semgrep/csharp-1.81.0.mjs', 3351311],
+  ['vendor/semgrep/engine-1.81.0.mjs', 6356572],
+  ['vendor/semgrep/csharp-1.81.0.mjs', 3367880],
   ['vendor/semgrep/csharp-1.81.0.wasm', 5693063],
-  ['vendor/semgrep/python-1.81.0.mjs', 3823434],
+  ['vendor/semgrep/python-1.81.0.mjs', 3836825],
   ['vendor/semgrep/python-1.81.0.wasm', 425874],
 ];
 // Parsers the worker loads on demand; prefetchLanguage() warms the cache with progress so the first run is quick.
 const LANGUAGE_FILES = {
-  cpp: [['vendor/semgrep/cpp-1.81.0.mjs', 5157751], ['vendor/semgrep/cpp-1.81.0.wasm', 3887500]],
+  cpp: [['vendor/semgrep/cpp-1.81.0.mjs', 5189968], ['vendor/semgrep/cpp-1.81.0.wasm', 3887500]],
 };
 LANGUAGE_FILES.c = LANGUAGE_FILES.cpp;
 // A run gets 20 s plus 2 s per target file, at most two minutes. A download that makes no progress for a
